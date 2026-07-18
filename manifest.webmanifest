@@ -1,0 +1,9 @@
+{
+  "name": "O Investigador da Qualidade",
+  "short_name": "Investigador",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#07080d",
+  "theme_color": "#07080d",
+  "description": "Agente mobile para investigar causa raiz e gerar plano de ação."
+}

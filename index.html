@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#07080d" />
+    <meta
+      name="description"
+      content="Investigador da Qualidade: descubra causas raiz e gere planos de ação com perguntas guiadas."
+    />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>O Investigador da Qualidade</title>
+  </head>
+  <body>
+    <main class="app-shell" id="app">
+      <section class="screen screen-home is-active" data-screen="home">
+        <div class="brand-mark" aria-hidden="true">
+          <div class="hat"></div>
+          <div class="lens"></div>
+        </div>
+        <p class="eyebrow">Agente de causa raiz</p>
+        <h1>O Investigador da Qualidade</h1>
+        <p class="lead">
+          Responda perguntas simples e receba uma hipótese de causa raiz com plano de ação.
+        </p>
+
+        <form class="start-form" id="startForm">
+          <label for="profile">Quem está investigando?</label>
+          <select id="profile" name="profile">
+            <option value="Empresário / gestor">Empresário / gestor</option>
+            <option value="Funcionário / operador">Funcionário / operador</option>
+            <option value="Consumidor comum">Consumidor comum</option>
+          </select>
+
+          <label for="problem">Descreva o problema em uma frase</label>
+          <textarea
+            id="problem"
+            name="problem"
+            rows="4"
+            placeholder="Ex.: Meus clientes reclamam de atraso na entrega"
+            required
+          ></textarea>
+
+          <button class="primary-action" type="submit">Começar investigação</button>
+        </form>
+      </section>
+
+      <section class="screen" data-screen="investigation">
+        <header class="topbar">
+          <button class="icon-button" id="backHome" type="button" aria-label="Voltar">←</button>
+          <div>
+            <p class="kicker">Investigação em andamento</p>
+            <strong id="stepLabel">Pergunta 1</strong>
+          </div>
+        </header>
+
+        <div class="progress-track" aria-label="Progresso da investigação">
+          <span id="progressBar"></span>
+        </div>
+
+        <article class="question-panel">
+          <p class="question-meta" id="questionCategory">Processo</p>
+          <h2 id="questionText"></h2>
+          <div class="answer-grid">
+            <button type="button" data-answer="yes">Sim</button>
+            <button type="button" data-answer="no">Não</button>
+            <button type="button" data-answer="partial">Parcialmente</button>
+            <button type="button" data-answer="unknown">Não sei</button>
+          </div>
+        </article>
+
+        <section class="history-panel">
+          <h3>Respostas recentes</h3>
+          <ol id="historyList"></ol>
+        </section>
+      </section>
+
+      <section class="screen" data-screen="result">
+        <header class="topbar">
+          <button class="icon-button" id="restartTop" type="button" aria-label="Recomeçar">↺</button>
+          <div>
+            <p class="kicker">Diagnóstico</p>
+            <strong>Causa raiz provável</strong>
+          </div>
+        </header>
+
+        <article class="result-hero">
+          <p class="confidence" id="confidenceLabel"></p>
+          <h2 id="rootCauseTitle"></h2>
+          <p id="rootCauseText"></p>
+        </article>
+
+        <section class="result-section">
+          <h3>Evidências usadas</h3>
+          <ul id="evidenceList"></ul>
+        </section>
+
+        <section class="result-section">
+          <h3>Plano 5W2H</h3>
+          <div class="action-table" id="actionPlan"></div>
+        </section>
+
+        <section class="result-section">
+          <h3>Indicadores para acompanhar</h3>
+          <ul id="metricList"></ul>
+        </section>
+
+        <div class="result-actions">
+          <button class="secondary-action" id="copyReport" type="button">Copiar diagnóstico</button>
+          <button class="secondary-action" id="downloadReport" type="button">Baixar relatório</button>
+          <button class="primary-action" id="restart" type="button">Nova investigação</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
