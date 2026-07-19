@@ -33,6 +33,43 @@
             <option value="Consumidor comum">Consumidor comum</option>
           </select>
 
+          <div class="context-grid">
+            <div>
+              <label for="segment">Segmento</label>
+              <select id="segment" name="segment">
+                <option value="generic">Geral</option>
+                <option value="retail">Comércio / varejo</option>
+                <option value="services">Serviços</option>
+                <option value="industry">Indústria</option>
+                <option value="restaurant">Restaurante / alimentação</option>
+                <option value="ecommerce">E-commerce</option>
+                <option value="health">Clínica / saúde</option>
+                <option value="education">Educação</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="area">Área do problema</label>
+              <select id="area" name="area">
+                <option value="auto">Detectar automaticamente</option>
+                <option value="commercial">Vendas / comercial</option>
+                <option value="service">Atendimento / experiência</option>
+                <option value="operations">Operação / entrega</option>
+                <option value="people">Pessoas / liderança</option>
+                <option value="product">Produto / serviço</option>
+                <option value="finance">Financeiro</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="audience">Público afetado</label>
+          <select id="audience" name="audience">
+            <option value="mixed">Misto / não sei</option>
+            <option value="b2c">Consumidor final</option>
+            <option value="b2b">Empresas / clientes corporativos</option>
+            <option value="internal">Equipe interna</option>
+          </select>
+
           <label for="problem">Descreva o problema em uma frase</label>
           <textarea
             id="problem"
@@ -61,6 +98,7 @@
 
         <article class="question-panel">
           <p class="question-meta" id="questionCategory">Processo</p>
+          <p class="context-line" id="contextLine"></p>
           <h2 id="questionText"></h2>
           <div class="answer-grid">
             <button type="button" data-answer="yes">Sim</button>
