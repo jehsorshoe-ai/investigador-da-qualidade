@@ -1,0 +1,4 @@
+interface:
+  display_name: "Root Cause Investigation Engine"
+  short_description: "Maintain the causal investigation engine safely."
+  default_prompt: "Use this skill when changing the root-cause investigation engine, routing, questions, hypotheses, or tests."

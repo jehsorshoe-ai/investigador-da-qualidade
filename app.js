@@ -56,6 +56,84 @@ const categoryPillars = {
   customer: "product",
 };
 
+const questionTypes = {
+  boolean: "BOOLEAN",
+  multipleChoice: "MULTIPLE_CHOICE",
+  text: "TEXT",
+  evidenceRequest: "EVIDENCE_REQUEST",
+  confirmation: "CONFIRMATION",
+};
+
+const investigationLineLabels = {
+  SERVICE_FAILURE: "Falha de atendimento",
+  CUSTOMER_COMPLAINT: "Reclamacao de cliente",
+  FUNNEL_COMMERCIAL: "Funil comercial",
+  COMMERCIAL_CONVERSION: "Conversao comercial",
+  TECHNICAL_REWORK: "Retrabalho tecnico",
+  DOCUMENT_PROCESS: "Processo documental",
+  DELAY: "Atraso",
+  GENERAL_CAUSAL_INVESTIGATION: "Investigacao causal geral",
+};
+
+const classificationTargets = {
+  serviceFailure: {
+    phenomenon: "insatisfacao_cliente",
+    domain: "atendimento",
+    line: "SERVICE_FAILURE",
+    area: "service",
+    categories: ["customer", "method", "people", "measurement", "tools", "offer"],
+  },
+  salesFunnel: {
+    phenomenon: "queda_vendas",
+    domain: "comercial",
+    line: "FUNNEL_COMMERCIAL",
+    area: "commercial",
+    categories: ["funnel", "offer", "market", "input", "people", "measurement", "method", "tools"],
+  },
+  conversion: {
+    phenomenon: "baixa_conversao",
+    domain: "comercial",
+    line: "FUNNEL_COMMERCIAL",
+    area: "commercial",
+    categories: ["funnel", "offer", "market", "people", "measurement", "method"],
+  },
+  technicalRework: {
+    phenomenon: "retrabalho_falha_tecnica",
+    domain: "operacao",
+    line: "TECHNICAL_REWORK",
+    area: "operations",
+    categories: ["method", "input", "tools", "measurement", "people"],
+  },
+  documentProcess: {
+    phenomenon: "erro_documental",
+    domain: "processo_documental",
+    line: "DOCUMENT_PROCESS",
+    area: "operations",
+    categories: ["method", "people", "tools", "measurement", "input"],
+  },
+  delay: {
+    phenomenon: "atraso",
+    domain: "operacao",
+    line: "DELAY",
+    area: "operations",
+    categories: ["method", "measurement", "people", "input", "tools"],
+  },
+  productFailure: {
+    phenomenon: "falha_produto",
+    domain: "produto",
+    line: "GENERAL_CAUSAL_INVESTIGATION",
+    area: "product",
+    categories: ["input", "method", "measurement", "tools", "customer", "people"],
+  },
+  general: {
+    phenomenon: "indefinido",
+    domain: "geral",
+    line: "GENERAL_CAUSAL_INVESTIGATION",
+    area: "operations",
+    categories: ["method", "people", "measurement", "input", "tools", "customer"],
+  },
+};
+
 const areaKeywords = {
   commercial: {
     venda: 3,
@@ -570,6 +648,194 @@ const questionBank = [
   },
 ];
 
+const investigationRouteQuestions = {
+  SERVICE_FAILURE: [
+    {
+      id: "service_manifestation",
+      text: "O que especificamente foi percebido pelo cliente como falha no atendimento?",
+      type: questionTypes.multipleChoice,
+      category: "customer",
+      questionPurpose: "identificar_manifestacao",
+      targetHypothesis: "manifestacao_da_reclamacao",
+      expectedInformationGain: 0.95,
+      evidence: "A manifestacao inicial da reclamacao foi identificada.",
+      options: [
+        {
+          value: "delay",
+          label: "Demora para ser atendido",
+          facts: ["service_delay"],
+          scores: { method: 2, measurement: 1 },
+          evidence: "O cliente percebeu demora no atendimento.",
+        },
+        {
+          value: "no_return",
+          label: "Falta de retorno",
+          facts: ["no_return"],
+          scores: { method: 2, tools: 1, measurement: 1 },
+          evidence: "O cliente percebeu ausencia de retorno.",
+        },
+        {
+          value: "attitude",
+          label: "Postura ou cordialidade",
+          facts: ["attitude_issue"],
+          scores: { people: 2.5, method: 1 },
+          evidence: "O cliente percebeu falha de postura ou cordialidade.",
+        },
+        {
+          value: "wrong_info",
+          label: "Informacao incorreta",
+          facts: ["wrong_information"],
+          scores: { method: 1.5, people: 1, tools: 1 },
+          evidence: "O cliente recebeu informacao incorreta.",
+        },
+        {
+          value: "no_solution",
+          label: "Falta de solucao",
+          facts: ["no_solution"],
+          scores: { method: 2, people: 1, measurement: 1 },
+          evidence: "O cliente percebeu falta de solucao para a necessidade.",
+        },
+        {
+          value: "broken_promise",
+          label: "Promessa nao cumprida",
+          facts: ["broken_promise"],
+          scores: { customer: 2, method: 1, offer: 1 },
+          evidence: "A reclamacao envolve promessa nao cumprida.",
+        },
+        {
+          value: "contact_difficulty",
+          label: "Dificuldade de contato",
+          facts: ["contact_difficulty"],
+          scores: { tools: 2, method: 1, measurement: 1 },
+          evidence: "O cliente teve dificuldade para falar com a empresa.",
+        },
+        {
+          value: "other",
+          label: "Outro ponto do atendimento",
+          facts: ["service_other"],
+          scores: { customer: 1, measurement: 1 },
+          evidence: "A reclamacao exige detalhamento adicional sobre o atendimento.",
+        },
+      ],
+    },
+    {
+      id: "return_owner",
+      text: "Havia uma pessoa responsavel por retornar ao cliente?",
+      type: questionTypes.boolean,
+      category: "method",
+      reverse: true,
+      triggerFacts: ["no_return"],
+      questionPurpose: "testar_responsabilidade",
+      targetHypothesis: "responsabilidade_indefinida",
+      expectedInformationGain: 0.86,
+      evidence: "Pode faltar responsavel claro pelo retorno ao cliente.",
+    },
+    {
+      id: "request_received",
+      text: "O responsavel recebeu a solicitacao do cliente?",
+      type: questionTypes.boolean,
+      category: "tools",
+      reverse: true,
+      triggerFacts: ["no_return"],
+      requiredAsked: ["return_owner"],
+      questionPurpose: "testar_fluxo_de_comunicacao",
+      targetHypothesis: "falha_registro_comunicacao",
+      expectedInformationGain: 0.8,
+      evidence: "A solicitacao pode nao ter chegado ao responsavel pelo retorno.",
+    },
+    {
+      id: "return_deadline",
+      text: "Existia prazo claro para o retorno ao cliente?",
+      type: questionTypes.boolean,
+      category: "method",
+      reverse: true,
+      triggerFacts: ["no_return"],
+      requiredAsked: ["request_received"],
+      questionPurpose: "testar_prazo",
+      targetHypothesis: "prazo_de_retorno_inexistente",
+      expectedInformationGain: 0.78,
+      evidence: "Pode faltar prazo definido para retorno ao cliente.",
+    },
+    {
+      id: "attitude_standard",
+      text: "A equipe tem um padrao claro de postura nesse atendimento?",
+      type: questionTypes.boolean,
+      category: "people",
+      reverse: true,
+      triggerFacts: ["attitude_issue"],
+      questionPurpose: "testar_comportamento_esperado",
+      targetHypothesis: "padrao_comportamental_indefinido",
+      expectedInformationGain: 0.82,
+      evidence: "Pode faltar padrao claro de postura no atendimento.",
+    },
+    {
+      id: "information_source",
+      text: "A informacao correta estava facil de consultar no momento do atendimento?",
+      type: questionTypes.boolean,
+      category: "tools",
+      reverse: true,
+      triggerFacts: ["wrong_information"],
+      questionPurpose: "testar_fonte_de_informacao",
+      targetHypothesis: "base_de_informacao_fragil",
+      expectedInformationGain: 0.84,
+      evidence: "A informacao correta pode nao estar acessivel para quem atende.",
+    },
+    {
+      id: "promise_registered",
+      text: "A promessa feita ao cliente ficou registrada?",
+      type: questionTypes.boolean,
+      category: "method",
+      reverse: true,
+      triggerFacts: ["broken_promise"],
+      questionPurpose: "testar_registro_da_promessa",
+      targetHypothesis: "promessa_sem_controle",
+      expectedInformationGain: 0.82,
+      evidence: "A promessa ao cliente pode nao estar registrada de forma verificavel.",
+    },
+  ],
+  FUNNEL_COMMERCIAL: [
+    {
+      id: "sales_stage",
+      text: "Em qual fase da venda a perda aparece mais?",
+      type: questionTypes.multipleChoice,
+      category: "funnel",
+      questionPurpose: "localizar_gargalo",
+      targetHypothesis: "gargalo_do_funil",
+      expectedInformationGain: 0.9,
+      evidence: "A fase mais critica da venda foi localizada.",
+      options: [
+        { value: "lead_generation", label: "Chegada de interessados", facts: ["sales_lead_generation"], scores: { market: 2, input: 1 } },
+        { value: "qualification", label: "Entender se o cliente tem perfil", facts: ["sales_qualification"], scores: { input: 2, method: 1 } },
+        { value: "proposal", label: "Virar proposta", facts: ["sales_proposal"], scores: { funnel: 2, method: 1 } },
+        { value: "closing", label: "Fechamento", facts: ["sales_closing"], scores: { offer: 2, market: 1 } },
+        { value: "follow_up", label: "Retomar contato", facts: ["sales_follow_up"], scores: { method: 2, tools: 1 } },
+        { value: "unknown", label: "Nao sei", facts: ["sales_unknown_stage"], scores: { measurement: 2 } },
+      ],
+    },
+  ],
+  GENERAL_CAUSAL_INVESTIGATION: [
+    {
+      id: "general_effect",
+      text: "Para eu investigar corretamente, qual e o principal efeito observado?",
+      type: questionTypes.multipleChoice,
+      category: "measurement",
+      questionPurpose: "desambiguar_fenomeno",
+      targetHypothesis: "fenomeno_indefinido",
+      expectedInformationGain: 0.9,
+      evidence: "O efeito principal foi escolhido para orientar a investigacao.",
+      options: [
+        { value: "service", label: "Qualidade do atendimento", facts: ["route_service"], scores: { customer: 2, method: 1 } },
+        { value: "delay", label: "Demora ou atraso", facts: ["route_delay"], scores: { method: 2, measurement: 1 } },
+        { value: "return", label: "Falta de retorno", facts: ["no_return", "route_service"], scores: { method: 2, tools: 1 } },
+        { value: "product", label: "Produto ou servico entregue", facts: ["route_product"], scores: { input: 1, customer: 1 } },
+        { value: "document", label: "Cobranca ou documentacao", facts: ["route_document"], scores: { method: 2, tools: 1 } },
+        { value: "sales", label: "Venda ou negociacao", facts: ["route_sales"], scores: { funnel: 2, offer: 1 } },
+        { value: "other", label: "Outro efeito", facts: ["route_general"], scores: { measurement: 1 } },
+      ],
+    },
+  ],
+};
+
 const segmentQuestionBoost = {
   retail: {
     commercial: [
@@ -740,12 +1006,22 @@ function makeSegmentQuestions(segment, area) {
 const state = {
   profile: "",
   problem: "",
+  normalizedProblem: {},
+  classification: null,
+  route: null,
   segment: "generic",
   area: "operations",
   selectedArea: "auto",
   audience: "mixed",
   index: 0,
   asked: [],
+  evidence: [],
+  activeHypotheses: [],
+  rejectedHypotheses: [],
+  confirmedFacts: [],
+  currentDepth: 0,
+  investigationPath: [],
+  debugEvents: [],
   scores: {},
   questions: [],
 };
@@ -764,19 +1040,225 @@ const questionText = isBrowser ? document.querySelector("#questionText") : null;
 const questionCategory = isBrowser ? document.querySelector("#questionCategory") : null;
 const contextLine = isBrowser ? document.querySelector("#contextLine") : null;
 const historyList = isBrowser ? document.querySelector("#historyList") : null;
-const answerButtons = isBrowser ? document.querySelectorAll("[data-answer]") : [];
+const answerGrid = isBrowser ? document.querySelector("#answerGrid") : null;
 
 function stripAccents(value) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
-function detectArea(problem, selectedArea) {
-  const text = stripAccents(problem);
-  const isServiceComplaint = /\b(reclama|reclamacao|atendimento|atendente|suporte|experiencia|insatisfacao)\b/.test(text);
-  if (isServiceComplaint && selectedArea === "auto") {
-    return "service";
+function hasPattern(text, patterns) {
+  return patterns.some((pattern) => pattern.test(text));
+}
+
+function scoreClassification(score) {
+  return Math.max(0.1, Math.min(0.96, score));
+}
+
+function createClassification(target, details) {
+  const possibleLines = details.possibleLines || [target.line];
+  return {
+    fenomeno: target.phenomenon,
+    dominio: target.domain,
+    subdominio: details.subdomain || target.domain,
+    objeto_afetado: details.object || "nao_identificado",
+    sintoma: details.symptom || "sintoma_a_confirmar",
+    evento: details.event || "evento_a_confirmar",
+    impacto: details.impact || "impacto_a_confirmar",
+    contexto: details.context || "contexto_a_confirmar",
+    confianca_classificacao: scoreClassification(details.confidence),
+    possiveis_linhas: possibleLines,
+    route: target.line,
+    area: target.area,
+    reason: details.reason,
+  };
+}
+
+function classifyProblem(problem, selectedArea = "auto") {
+  const text = stripAccents(problem || "");
+  const selectedAreaContext = selectedArea !== "auto" ? selectedArea : null;
+  const commercialImpact = hasPattern(text, [
+    /\b(deixou de comprar|nao comprou|perdemos a venda|perda comercial|cancelou a compra)\b/,
+  ]);
+  const serviceManifestation = hasPattern(text, [
+    /\b(mau atendimento|mal atendido|mal atendida|atendente|consultor|cordialidade|grosseiro|grosseria)\b/,
+    /\b(ninguem retornou|sem retorno|falta de retorno|nao retornou|ligacao|suporte|pos-venda)\b/,
+    /\b(reclamou|reclama|reclamacao|insatisfacao).*\b(atendimento|atendido|atendida|retorno|suporte|consultor)\b/,
+  ]);
+  const complaintSignal = hasPattern(text, [/\b(reclamou|reclama|reclamacao|insatisfacao|cliente insatisfeito)\b/]);
+  const commercialFunnel = hasPattern(text, [
+    /\b(baixa performance em vendas|queda de vendas|perda de vendas|meta de vendas)\b/,
+    /\b(leads?|interessados).*\b(poucos|nao|nao viram|viram poucas).*\b(propostas?|orcamentos?)\b/,
+    /\b(muitas propostas|vendemos muitas propostas|propostas).*\b(poucos|nao).*\b(fecham|fechamento|compram)\b/,
+    /\b(conversao|funil|taxa de fechamento|vendas)\b/,
+  ]);
+  const conversionSignal = hasPattern(text, [
+    /\b(leads?|interessados).*\b(propostas?|orcamentos?)\b/,
+    /\b(propostas?).*\b(fecham|fechamento|compram)\b/,
+    /\b(conversao|taxa de fechamento)\b/,
+  ]);
+  const technicalRework = hasPattern(text, [
+    /\b(mesma falha|voltou para oficina|retornou para oficina|retrabalho)\b/,
+    /\b(caminhao|equipamento|maquina|veiculo).*\b(falha|defeito|oficina|manutencao)\b/,
+  ]);
+  const documentError = hasPattern(text, [
+    /\b(nota fiscal|documento|contrato|boleto|cadastro|pedido).*\b(incorreto|incorretos|errado|errados|erro|dados)\b/,
+    /\b(dados).*\b(incorreto|incorretos|errado|errados)\b/,
+  ]);
+  const productFailure = hasPattern(text, [/\b(produto|servico|item|peca).*\b(defeito|falha|quebrado|nao funciona)\b/]);
+  const delaySignal = hasPattern(text, [/\b(atraso|demora|prazo vencido|espera excessiva)\b/]);
+  const ambiguousComplaint = complaintSignal && hasPattern(text, [/\b(proposta|preco|valor|produto|servico|entrega)\b/]);
+
+  if (serviceManifestation) {
+    return createClassification(classificationTargets.serviceFailure, {
+      subdomain: hasPattern(text, [/\b(retorno|retornou|ligacao)\b/])
+        ? "retorno_cliente"
+        : "relacionamento_cliente",
+      object: "cliente",
+      symptom: hasPattern(text, [/\b(retorno|retornou|ligacao)\b/])
+        ? "mau atendimento e ausencia de retorno"
+        : "mau atendimento percebido",
+      event: "reclamacao_cliente",
+      impact: commercialImpact ? "perda_comercial" : "insatisfacao_cliente",
+      context: selectedAreaContext || "atendimento_ao_cliente",
+      confidence: commercialImpact ? 0.9 : 0.92,
+      possibleLines: ["SERVICE_FAILURE", "CUSTOMER_COMPLAINT", "GENERAL_CAUSAL_INVESTIGATION"],
+      reason: commercialImpact
+        ? "O relato indica falha percebida no atendimento; a perda comercial aparece como impacto, nao como fenomeno principal."
+        : "O relato contem manifestacao explicita de insatisfacao com atendimento, retorno, postura ou suporte.",
+    });
   }
+
+  if (ambiguousComplaint) {
+    return createClassification(classificationTargets.general, {
+      subdomain: "reclamacao_ambigua",
+      object: "cliente",
+      symptom: "reclamacao sem mecanismo principal claro",
+      event: "reclamacao_cliente",
+      impact: commercialImpact ? "perda_comercial" : "impacto_a_confirmar",
+      context: selectedAreaContext || "cliente",
+      confidence: 0.62,
+      possibleLines: ["SERVICE_FAILURE", "FUNNEL_COMMERCIAL", "DOCUMENT_PROCESS", "GENERAL_CAUSAL_INVESTIGATION"],
+      reason: "O relato mostra reclamacao de cliente, mas ainda nao separa atendimento, venda, produto, cobranca ou entrega.",
+    });
+  }
+
+  if (commercialFunnel && !serviceManifestation) {
+    return createClassification(conversionSignal ? classificationTargets.conversion : classificationTargets.salesFunnel, {
+      subdomain: conversionSignal
+        ? hasPattern(text, [/\b(propostas?).*\b(fecham|fechamento|compram)\b/])
+          ? "fechamento"
+          : "qualificacao_ou_proposta"
+        : "desempenho_comercial",
+      object: "oportunidades_comerciais",
+      symptom: conversionSignal ? "baixa conversao entre etapas comerciais" : "queda de desempenho em vendas",
+      event: "perda_comercial",
+      impact: "perda_de_receita",
+      context: selectedAreaContext || "comercial",
+      confidence: conversionSignal ? 0.9 : 0.84,
+      possibleLines: ["FUNNEL_COMMERCIAL", "conversao", "COMMERCIAL_CONVERSION"],
+      reason: "O relato descreve perda entre etapas comerciais, propostas, fechamento, leads ou conversao.",
+    });
+  }
+
+  if (technicalRework) {
+    return createClassification(classificationTargets.technicalRework, {
+      subdomain: "falha_tecnica",
+      object: hasPattern(text, [/\b(caminhao|veiculo)\b/]) ? "veiculo" : "equipamento",
+      symptom: "retorno pela mesma falha",
+      event: "retrabalho",
+      impact: "tempo_e_custo",
+      context: selectedAreaContext || "operacao",
+      confidence: 0.88,
+      possibleLines: ["TECHNICAL_REWORK", "GENERAL_CAUSAL_INVESTIGATION"],
+      reason: "O relato indica reincidencia da mesma falha, sugerindo retrabalho tecnico ou processo de correcao incompleto.",
+    });
+  }
+
+  if (documentError) {
+    return createClassification(classificationTargets.documentProcess, {
+      subdomain: "processo_documental",
+      object: hasPattern(text, [/\b(nota fiscal)\b/]) ? "nota_fiscal" : "documento",
+      symptom: "dados incorretos",
+      event: "erro_documental",
+      impact: "retrabalho_e_risco",
+      context: selectedAreaContext || "processo_administrativo",
+      confidence: 0.9,
+      possibleLines: ["DOCUMENT_PROCESS", "GENERAL_CAUSAL_INVESTIGATION"],
+      reason: "O relato descreve documento ou cadastro emitido com dados incorretos.",
+    });
+  }
+
+  if (productFailure) {
+    return createClassification(classificationTargets.productFailure, {
+      subdomain: "defeito_ou_uso",
+      object: "produto",
+      symptom: "defeito percebido",
+      event: "falha_produto",
+      impact: "insatisfacao_e_retrabalho",
+      context: selectedAreaContext || "produto",
+      confidence: 0.74,
+      possibleLines: ["GENERAL_CAUSAL_INVESTIGATION"],
+      reason: "O relato indica falha percebida no produto ou servico, mas ainda precisa separar uso, entrada, metodo e medicao.",
+    });
+  }
+
+  if (delaySignal && !serviceManifestation) {
+    return createClassification(classificationTargets.delay, {
+      subdomain: "prazo",
+      object: "entrega_ou_atendimento",
+      symptom: "demora ou atraso",
+      event: "atraso",
+      impact: "espera_e_insatisfacao",
+      context: selectedAreaContext || "operacao",
+      confidence: 0.76,
+      possibleLines: ["DELAY", "SERVICE_FAILURE", "GENERAL_CAUSAL_INVESTIGATION"],
+      reason: "O relato indica demora ou atraso, mas ainda precisa localizar origem e mecanismo.",
+    });
+  }
+
+  const fallbackTarget = selectedAreaContext && classificationTargets[selectedAreaContext] ? classificationTargets[selectedAreaContext] : classificationTargets.general;
+  return createClassification(fallbackTarget.line ? fallbackTarget : classificationTargets.general, {
+    subdomain: selectedAreaContext || "indefinido",
+    object: "nao_identificado",
+    symptom: "efeito_principal_indefinido",
+    event: "evento_a_confirmar",
+    impact: "impacto_a_confirmar",
+    context: selectedAreaContext || "geral",
+    confidence: 0.42,
+    possibleLines: ["GENERAL_CAUSAL_INVESTIGATION"],
+    reason: "Nao ha sinais suficientes para escolher uma arvore especializada com seguranca.",
+  });
+}
+
+function routeInvestigation(classification) {
+  if (classification.confianca_classificacao >= 0.8) {
+    return {
+      selectedLine: classification.route,
+      area: classification.area,
+      routeLocked: true,
+      gate: "high_confidence",
+      reason: classification.reason,
+    };
+  }
+
+  return {
+    selectedLine: "GENERAL_CAUSAL_INVESTIGATION",
+    area: classification.area || "operations",
+    routeLocked: false,
+    gate: classification.confianca_classificacao >= 0.5 ? "needs_disambiguation" : "safe_fallback",
+    reason:
+      classification.confianca_classificacao >= 0.5
+        ? "Confianca intermediaria; a investigacao precisa desambiguar o efeito principal antes de escolher arvore especializada."
+        : "Confianca baixa; usando fallback seguro para nao improvisar uma arvore especializada.",
+  };
+}
+
+function detectArea(problem, selectedArea) {
+  const classification = classifyProblem(problem, selectedArea);
+  const route = routeInvestigation(classification);
+  if (route.selectedLine !== "GENERAL_CAUSAL_INVESTIGATION" || selectedArea === "auto") return route.area;
   if (selectedArea !== "auto") return selectedArea;
+  const text = stripAccents(problem);
   const ranked = Object.entries(areaKeywords)
     .map(([area, keywordWeights]) => ({
       area,
@@ -799,7 +1281,7 @@ function resetScores() {
 }
 
 function seedScores() {
-  if (state.area === "commercial") {
+  if (state.route?.selectedLine === "FUNNEL_COMMERCIAL" || state.route?.selectedLine === "COMMERCIAL_CONVERSION") {
     state.scores.funnel += 2;
     state.scores.offer += 1.5;
     state.scores.market += 1.5;
@@ -807,13 +1289,20 @@ function seedScores() {
     state.scores.measurement += 1;
   }
 
-  if (state.area === "service") {
+  if (state.route?.selectedLine === "SERVICE_FAILURE" || state.route?.selectedLine === "CUSTOMER_COMPLAINT") {
     state.scores.customer += 2;
     state.scores.method += 1.5;
     state.scores.people += 1;
+    state.scores.measurement += 0.5;
   }
 
-  if (state.area === "operations" || state.area === "product") {
+  if (
+    state.route?.selectedLine === "TECHNICAL_REWORK" ||
+    state.route?.selectedLine === "DOCUMENT_PROCESS" ||
+    state.route?.selectedLine === "DELAY" ||
+    state.area === "operations" ||
+    state.area === "product"
+  ) {
     state.scores.method += 1.5;
     state.scores.input += 1.5;
     state.scores.measurement += 1;
@@ -824,20 +1313,20 @@ function seedScores() {
     state.scores.customer += 0.5;
   }
 
-  const text = stripAccents(state.problem);
-  if (text.includes("venda") || text.includes("performance") || text.includes("meta")) {
-    state.scores.funnel += 1;
-    state.scores.offer += 1;
-    state.scores.market += 1;
-  }
-  if (text.includes("reclam") || text.includes("cliente")) state.scores.customer += 1;
-  if (text.includes("atras") || text.includes("entrega")) state.scores.method += 1;
-  if (text.includes("defeito") || text.includes("falha")) state.scores.input += 1;
+  state.classification?.possiveis_linhas?.forEach((line) => {
+    if (line === "SERVICE_FAILURE" || line === "CUSTOMER_COMPLAINT") state.scores.customer += 0.5;
+    if (line === "FUNNEL_COMMERCIAL" || line === "COMMERCIAL_CONVERSION") state.scores.funnel += 0.5;
+    if (line === "DOCUMENT_PROCESS" || line === "TECHNICAL_REWORK") state.scores.method += 0.5;
+  });
 }
 
 function buildQuestionSet() {
+  const routeQuestions = investigationRouteQuestions[state.route?.selectedLine] || [];
+  const routeCategories =
+    Object.values(classificationTargets).find((target) => target.line === state.route?.selectedLine)?.categories ||
+    classificationTargets.general.categories;
   const base = questionBank
-    .filter((question) => question.areas.includes(state.area))
+    .filter((question) => question.areas.includes(state.area) && routeCategories.includes(question.category))
     .sort((a, b) => {
       const aSpecific = a.areas.length === 1 && a.areas[0] === state.area ? 1 : 0;
       const bSpecific = b.areas.length === 1 && b.areas[0] === state.area ? 1 : 0;
@@ -846,10 +1335,11 @@ function buildQuestionSet() {
   const generic = questionBank.filter(
     (question) =>
       !question.areas.includes(state.area) &&
-      ["measurement", "tools", "people", "method"].includes(question.category),
+      ["measurement", "tools", "people", "method"].includes(question.category) &&
+      routeCategories.includes(question.category),
   );
   const segmentSpecific = makeSegmentQuestions(state.segment, state.area);
-  const unique = [...segmentSpecific, ...base, ...generic].filter(
+  const unique = [...routeQuestions, ...segmentSpecific, ...base, ...generic].filter(
     (question, index, all) => all.findIndex((candidate) => candidate.text === question.text) === index,
   );
   return unique;
@@ -865,12 +1355,41 @@ function beginInvestigation({ profile, segment, selectedArea, audience, problem 
   state.selectedArea = selectedArea || "auto";
   state.audience = audience || "mixed";
   state.problem = (problem || "").trim();
+  state.normalizedProblem = {};
+  state.classification = null;
+  state.route = null;
   state.index = 0;
   state.asked = [];
+  state.evidence = [];
+  state.activeHypotheses = [];
+  state.rejectedHypotheses = [];
+  state.confirmedFacts = [];
+  state.currentDepth = 0;
+  state.investigationPath = [];
+  state.debugEvents = [];
   state.questions = [];
 
   resetScores();
-  state.area = detectArea(state.problem, state.selectedArea);
+  state.classification = classifyProblem(state.problem, state.selectedArea);
+  state.route = routeInvestigation(state.classification);
+  state.normalizedProblem = {
+    originalProblem: state.problem,
+    normalizedText: stripAccents(state.problem),
+    classification: state.classification,
+  };
+  state.area = state.route.area;
+  state.activeHypotheses = state.classification.possiveis_linhas.map((line) => ({
+    id: line,
+    label: investigationLineLabels[line] || line,
+    score: line === state.route.selectedLine ? 2 : 1,
+  }));
+  state.debugEvents.push({
+    type: "classification",
+    classification: state.classification,
+    selectedRoute: state.route.selectedLine,
+    routeGate: state.route.gate,
+    reason: state.route.reason,
+  });
   state.questions = buildQuestionSet();
   seedScores();
   state.index = nextQuestionIndex();
@@ -968,6 +1487,33 @@ function recentlyAskedSameCategory(category) {
   return recent.length >= 2 && recent.every((item) => item.category === category);
 }
 
+function questionType(question) {
+  return question.type || questionTypes.boolean;
+}
+
+function askedQuestionIds() {
+  return new Set(state.asked.map((item) => item.questionId).filter(Boolean));
+}
+
+function canAskQuestion(question, askedIndexes) {
+  if (askedIndexes.has(state.questions.indexOf(question))) return false;
+  const askedIds = askedQuestionIds();
+  if (question.requiredAsked?.some((id) => !askedIds.has(id))) return false;
+  if (question.triggerFacts?.length) {
+    return question.triggerFacts.some((fact) => state.confirmedFacts.includes(fact));
+  }
+  return true;
+}
+
+function findHighGainRouteQuestion(askedIndexes) {
+  const routeQuestionIds = new Set((investigationRouteQuestions[state.route?.selectedLine] || []).map((question) => question.id));
+  return state.questions.findIndex((question, index) => {
+    if (!routeQuestionIds.has(question.id)) return false;
+    if (askedIndexes.has(index)) return false;
+    return canAskQuestion(question, askedIndexes);
+  });
+}
+
 function findQuestionByPillar(pillar, askedIndexes) {
   const rankedCategories = Object.entries(state.scores)
     .filter(([category]) => categoryPillars[category] === pillar)
@@ -977,18 +1523,21 @@ function findQuestionByPillar(pillar, askedIndexes) {
   for (const category of rankedCategories) {
     if (categoryAskedCount(category) >= 3 || recentlyAskedSameCategory(category)) continue;
     const found = state.questions.findIndex(
-      (question, index) => !askedIndexes.has(index) && question.category === category,
+      (question, index) => !askedIndexes.has(index) && question.category === category && canAskQuestion(question, askedIndexes),
     );
     if (found !== -1) return found;
   }
 
   return state.questions.findIndex((question, index) => {
-    return !askedIndexes.has(index) && questionPillar(question) === pillar;
+    return !askedIndexes.has(index) && questionPillar(question) === pillar && canAskQuestion(question, askedIndexes);
   });
 }
 
 function nextQuestionIndex() {
   const askedIndexes = new Set(state.asked.map((item) => item.index));
+  const routeQuestion = findHighGainRouteQuestion(askedIndexes);
+  if (routeQuestion !== -1) return routeQuestion;
+
   if (state.asked.length >= 1 && state.asked.length < 6) {
     const rankedPillars = Object.entries(pillarScores())
       .sort((a, b) => b[1] - a[1])
@@ -1008,13 +1557,13 @@ function nextQuestionIndex() {
   for (const category of rankedCategories) {
     if (categoryAskedCount(category) >= 3 || recentlyAskedSameCategory(category)) continue;
     const targeted = state.questions.findIndex(
-      (question, index) => !askedIndexes.has(index) && question.category === category,
+      (question, index) => !askedIndexes.has(index) && question.category === category && canAskQuestion(question, askedIndexes),
     );
     if (targeted !== -1) return targeted;
   }
 
   return state.questions.findIndex((question, index) => {
-    return !askedIndexes.has(index) && !recentlyAskedSameCategory(question.category);
+    return !askedIndexes.has(index) && !recentlyAskedSameCategory(question.category) && canAskQuestion(question, askedIndexes);
   });
 }
 
@@ -1023,15 +1572,35 @@ function renderQuestion() {
   stepLabel.textContent = `Pergunta ${state.asked.length + 1}`;
   questionText.textContent = question.text;
   questionCategory.textContent = `Linha de investigacao: ${categories[question.category].title}`;
-  contextLine.textContent = `${areaLabels[state.area]} | ${segmentLabels[state.segment]} | ${audienceLabels[state.audience]}`;
+  contextLine.textContent = `${investigationLineLabels[state.route?.selectedLine] || areaLabels[state.area]} | ${segmentLabels[state.segment]} | ${audienceLabels[state.audience]}`;
   progressBar.style.width = `${Math.min(100, (state.asked.length / MAX_QUESTIONS) * 100)}%`;
+  renderAnswerControls(question);
   renderHistory();
+}
+
+function booleanOptions() {
+  return [
+    { value: "yes", label: "Sim" },
+    { value: "no", label: "Nao" },
+    { value: "partial", label: "Parcialmente" },
+    { value: "unknown", label: "Nao sei" },
+  ];
+}
+
+function renderAnswerControls(question) {
+  const options = questionType(question) === questionTypes.multipleChoice ? question.options : booleanOptions();
+  answerGrid.innerHTML = options
+    .map((option) => `<button type="button" data-answer="${option.value}">${option.label}</button>`)
+    .join("");
+  answerGrid.querySelectorAll("[data-answer]").forEach((button) => {
+    button.addEventListener("click", () => handleAnswer(button.dataset.answer));
+  });
 }
 
 function renderHistory() {
   const recent = state.asked.slice(-4);
   historyList.innerHTML = recent
-    .map((item) => `<li><strong>${labelAnswer(item.answer)}:</strong> ${item.text}</li>`)
+    .map((item) => `<li><strong>${item.answerLabel || labelAnswer(item.answer)}:</strong> ${item.text}</li>`)
     .join("");
 }
 
@@ -1060,18 +1629,70 @@ function applyRelatedScore(question, answer, primaryWeight) {
   });
 }
 
+function registerFacts(facts = []) {
+  facts.forEach((fact) => {
+    if (!state.confirmedFacts.includes(fact)) state.confirmedFacts.push(fact);
+  });
+}
+
+function registerEvidence(evidence) {
+  if (evidence) state.evidence.push(evidence);
+}
+
+function registerHypothesis(id, score = 1) {
+  const existing = state.activeHypotheses.find((hypothesis) => hypothesis.id === id);
+  if (existing) {
+    existing.score += score;
+    return;
+  }
+  state.activeHypotheses.push({
+    id,
+    label: investigationLineLabels[id] || categories[id]?.title || id,
+    score,
+  });
+}
+
+function applyOptionAnswer(question, answer) {
+  const option = question.options.find((candidate) => candidate.value === answer) || question.options[0];
+  Object.entries(option.scores || { [question.category]: 1 }).forEach(([category, score]) => {
+    if (state.scores[category] !== undefined) state.scores[category] += score;
+  });
+  registerFacts(option.facts || []);
+  registerEvidence(option.evidence || question.evidence);
+  registerHypothesis(question.targetHypothesis, option.scores ? 1 : 0.5);
+  return option;
+}
+
 function recordAnswer(answer) {
   const question = currentQuestion();
-  const primaryWeight = answerWeight(answer, question.reverse);
-  state.scores[question.category] += primaryWeight;
-  applyRelatedScore(question, answer, primaryWeight);
+  const isChoiceQuestion = questionType(question) === questionTypes.multipleChoice;
+  const option = isChoiceQuestion ? applyOptionAnswer(question, answer) : null;
+  const primaryWeight = isChoiceQuestion ? 2 : answerWeight(answer, question.reverse);
+
+  if (!isChoiceQuestion) {
+    state.scores[question.category] += primaryWeight;
+    applyRelatedScore(question, answer, primaryWeight);
+    if (primaryWeight > 0) {
+      registerEvidence(question.evidence);
+      registerHypothesis(question.targetHypothesis || question.category, primaryWeight / 2);
+    } else if (primaryWeight < 0 && question.targetHypothesis) {
+      state.rejectedHypotheses.push(question.targetHypothesis);
+    }
+  }
+
+  state.currentDepth += 1;
+  state.investigationPath.push(question.id || question.category);
 
   state.asked.push({
     index: state.index,
+    questionId: question.id,
     text: question.text,
     answer,
+    answerLabel: option?.label,
     category: question.category,
     evidence: question.evidence,
+    questionPurpose: question.questionPurpose,
+    targetHypothesis: question.targetHypothesis,
     positive: primaryWeight > 0,
   });
 
@@ -1194,15 +1815,38 @@ ${diagnosis.metrics.map((metric) => `- ${metric}`).join("\n")}
 `;
 }
 
+function getDebugRoute() {
+  return {
+    classification: state.classification,
+    selectedRoute: state.route?.selectedLine,
+    routeGate: state.route?.gate,
+    confidence: state.classification?.confianca_classificacao,
+    reason: state.route?.reason,
+    activeHypotheses: state.activeHypotheses,
+    confirmedFacts: state.confirmedFacts,
+    investigationPath: state.investigationPath,
+  };
+}
+
 function resetApp() {
   state.profile = "";
   state.problem = "";
+  state.normalizedProblem = {};
+  state.classification = null;
+  state.route = null;
   state.segment = "generic";
   state.area = "operations";
   state.selectedArea = "auto";
   state.audience = "mixed";
   state.index = 0;
   state.asked = [];
+  state.evidence = [];
+  state.activeHypotheses = [];
+  state.rejectedHypotheses = [];
+  state.confirmedFacts = [];
+  state.currentDepth = 0;
+  state.investigationPath = [];
+  state.debugEvents = [];
   state.questions = [];
   resetScores();
   startForm.reset();
@@ -1224,10 +1868,6 @@ function initBrowserApp() {
     });
     renderQuestion();
     showScreen("investigation");
-  });
-
-  answerButtons.forEach((button) => {
-    button.addEventListener("click", () => handleAnswer(button.dataset.answer));
   });
 
   document.querySelector("#backHome").addEventListener("click", resetApp);
@@ -1257,16 +1897,22 @@ if (typeof module !== "undefined") {
   module.exports = {
     state,
     questionBank,
+    investigationRouteQuestions,
     segmentQuestionBoost,
     makeSegmentQuestions,
+    classifyProblem,
+    routeInvestigation,
     detectArea,
     beginInvestigation,
     recordAnswer,
     answerWeight,
+    questionTypes,
+    investigationLineLabels,
     categoryPillars,
     qualityPillars,
     categories,
     topCategoryKey,
     buildReport,
+    getDebugRoute,
   };
 }
