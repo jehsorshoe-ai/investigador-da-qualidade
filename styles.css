@@ -16,8 +16,9 @@
   --violet: #3b31b7;
   --danger: #fb7185;
   --shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: "Manrope", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk", "Manrope", ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-body);
 }
 
 * {
@@ -458,7 +459,7 @@ body[data-view="result"] .ambient-axis {
 h1 {
   margin: 8px 0 0;
   color: var(--ink);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display);
   font-size: 4.2rem;
   line-height: 0.96;
   letter-spacing: 0;
@@ -546,7 +547,7 @@ h1 {
 .form-heading h2 {
   margin: 2px 0 0;
   color: var(--ink);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display);
   font-size: 1.65rem;
   line-height: 1.1;
 }
@@ -719,6 +720,8 @@ textarea:focus-visible {
 .result-hero h2 {
   margin: 10px 0 18px;
   overflow-wrap: anywhere;
+  font-family: var(--font-display);
+  font-weight: 700;
   font-size: 1.58rem;
   line-height: 1.2;
 }
@@ -1365,7 +1368,7 @@ body[data-view="home"] .home-panel-stack {
 .stage-copy h1 {
   margin: 18px 0 0;
   color: #f7fbfa;
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(5.8rem, 8vw, 9rem);
   font-weight: 780;
   line-height: 0.86;
@@ -1637,6 +1640,130 @@ body[data-view="home"] .home-panel-stack {
     min-height: 96px;
     padding-inline: 30px;
     font-size: 1.55rem;
+  }
+
+  /* The browser reports a much larger CSS viewport at reduced page zoom. */
+  body[data-view="investigation"] .app-shell,
+  body[data-view="result"] .app-shell {
+    width: min(calc(100% - 160px), 1320px);
+    padding: 68px 48px 120px;
+  }
+
+  body[data-view="investigation"] .topbar,
+  body[data-view="result"] .topbar {
+    gap: 24px;
+    margin-bottom: 28px;
+    padding-top: 0;
+  }
+
+  body[data-view="investigation"] .topbar strong,
+  body[data-view="result"] .topbar strong {
+    font-size: 2rem;
+  }
+
+  body[data-view="investigation"] .kicker,
+  body[data-view="result"] .kicker,
+  body[data-view="investigation"] .question-meta {
+    font-size: 1.25rem;
+  }
+
+  body[data-view="investigation"] .icon-button,
+  body[data-view="result"] .icon-button {
+    width: 86px;
+    min-height: 86px;
+    flex-basis: 86px;
+    font-size: 2.2rem;
+  }
+
+  body[data-view="investigation"] .progress-track {
+    height: 12px;
+    border-radius: 6px;
+  }
+
+  body[data-view="investigation"] .question-panel {
+    margin-top: 32px;
+    padding: 44px;
+    border-radius: 12px;
+  }
+
+  body[data-view="investigation"] .question-panel h2,
+  body[data-view="result"] .result-hero h2 {
+    margin: 20px 0 30px;
+    font-size: 3.15rem;
+    line-height: 1.12;
+  }
+
+  body[data-view="investigation"] .context-line {
+    margin-top: 16px;
+    font-size: 1.35rem;
+    line-height: 1.55;
+  }
+
+  body[data-view="investigation"] .answer-grid {
+    gap: 18px;
+  }
+
+  body[data-view="investigation"] .answer-grid button,
+  body[data-view="result"] .secondary-action,
+  body[data-view="result"] .primary-action {
+    min-height: 96px;
+    padding: 18px 24px;
+    border-radius: 10px;
+    font-size: 1.35rem;
+  }
+
+  body[data-view="investigation"] .history-panel,
+  body[data-view="result"] .result-section,
+  body[data-view="result"] .result-hero {
+    margin-top: 28px;
+    padding: 36px;
+    border-radius: 12px;
+  }
+
+  body[data-view="investigation"] .history-panel h3,
+  body[data-view="result"] .result-section h3 {
+    margin-bottom: 20px;
+    font-size: 1.65rem;
+  }
+
+  body[data-view="investigation"] li,
+  body[data-view="result"] li,
+  body[data-view="result"] .result-hero p:last-child,
+  body[data-view="result"] .action-row span {
+    font-size: 1.3rem;
+    line-height: 1.6;
+  }
+
+  body[data-view="investigation"] li + li,
+  body[data-view="result"] li + li {
+    margin-top: 14px;
+  }
+
+  body[data-view="result"] .confidence {
+    padding: 10px 16px;
+    border-radius: 9px;
+    font-size: 1.2rem;
+  }
+
+  body[data-view="result"] .action-table,
+  body[data-view="result"] .result-actions {
+    gap: 16px;
+  }
+
+  body[data-view="result"] .action-row {
+    grid-template-columns: 138px minmax(0, 1fr);
+    gap: 20px;
+    padding: 22px;
+    border-radius: 10px;
+  }
+
+  body[data-view="result"] .action-row strong {
+    font-size: 1.25rem;
+  }
+
+  body[data-view="result"] .result-actions {
+    margin-top: 28px;
+    padding-bottom: 56px;
   }
 }
 
