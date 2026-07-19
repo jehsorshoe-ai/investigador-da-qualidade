@@ -1304,6 +1304,9 @@ const state = {
   debugEvents: [],
   scores: {},
   questions: [],
+  aiAdaptation: null,
+  aiRequestId: 0,
+  aiRequestedQuestionId: null,
 };
 
 const isBrowser = typeof document !== "undefined";
@@ -1730,6 +1733,9 @@ function beginInvestigation({ profile, segment, selectedArea, audience, problem 
   state.investigationPath = [];
   state.debugEvents = [];
   state.questions = [];
+  state.aiAdaptation = null;
+  state.aiRequestedQuestionId = null;
+  state.aiRequestId += 1;
 
   resetScores();
   if (shouldUseEngineV2()) {
@@ -2172,10 +2178,63 @@ function nextQuestionIndex() {
   return selectNextQuestionIndex(askedIndexes);
 }
 
-function renderQuestion() {
+function answerOptionsFor(question) {
+  return questionType(question) === questionTypes.multipleChoice ? question.options : booleanOptions();
+}
+
+function currentAiAdaptation(question) {
+  return state.aiAdaptation?.questionId === question.id ? state.aiAdaptation : null;
+}
+
+function aiContextForQuestion() {
+  return {
+    problem: state.problem,
+    profile: state.profile,
+    segment: segmentLabels[state.segment] || state.segment,
+    area: areaLabels[state.area] || state.area,
+    audience: audienceLabels[state.audience] || state.audience,
+    classification: {
+      phenomenon: state.classification?.fenomeno,
+      domain: state.classification?.dominio,
+      symptom: state.classification?.sintoma,
+      impact: state.classification?.impacto,
+    },
+    history: state.asked,
+  };
+}
+
+async function adaptCurrentQuestionWithAI(question) {
+  if (!isBrowser || !window.CausaRealAI?.isConfigured?.() || state.aiRequestedQuestionId === question.id) return;
+
+  const requestId = state.aiRequestId + 1;
+  state.aiRequestId = requestId;
+  state.aiRequestedQuestionId = question.id;
+
+  try {
+    const adaptation = await window.CausaRealAI.adaptQuestion({
+      canonicalQuestion: {
+        id: question.id,
+        text: question.text,
+        category: question.category,
+        targetHypothesis: question.targetHypothesis,
+        options: answerOptionsFor(question),
+      },
+      context: aiContextForQuestion(),
+    });
+    const stillCurrent = currentQuestion()?.id === question.id && requestId === state.aiRequestId;
+    if (!adaptation || !stillCurrent) return;
+    state.aiAdaptation = { questionId: question.id, ...adaptation };
+    renderQuestion({ skipAI: true });
+  } catch (_error) {
+    // The deterministic question remains available whenever the provider is unavailable.
+  }
+}
+
+function renderQuestion({ skipAI = false } = {}) {
   const question = currentQuestion();
+  const adaptation = currentAiAdaptation(question);
   stepLabel.textContent = `Pergunta ${state.asked.length + 1}`;
-  questionText.textContent = question.text;
+  questionText.textContent = adaptation?.question || question.text;
   if (state.engineVersion === "v2") {
     questionCategory.textContent = "Investigacao probabilistica: producao industrial";
     contextLine.textContent = `Engine V2 | ${segmentLabels[state.segment]} | ${audienceLabels[state.audience]}`;
@@ -2184,9 +2243,10 @@ function renderQuestion() {
     contextLine.textContent = `${questionContextPath()} | ${segmentLabels[state.segment]} | ${audienceLabels[state.audience]}`;
   }
   progressBar.style.width = `${Math.min(100, (state.asked.length / MAX_QUESTIONS) * 100)}%`;
-  renderAnswerControls(question);
+  renderAnswerControls(question, adaptation?.options);
   renderHistory();
   updateDebugPanel();
+  if (!skipAI) adaptCurrentQuestionWithAI(question);
 }
 
 function booleanOptions() {
@@ -2198,8 +2258,8 @@ function booleanOptions() {
   ];
 }
 
-function renderAnswerControls(question) {
-  const options = questionType(question) === questionTypes.multipleChoice ? question.options : booleanOptions();
+function renderAnswerControls(question, adaptedOptions = null) {
+  const options = adaptedOptions || answerOptionsFor(question);
   answerGrid.innerHTML = options
     .map((option) => `<button type="button" data-answer="${option.value}">${option.label}</button>`)
     .join("");
@@ -2510,6 +2570,9 @@ function recordAnswer(answer) {
 }
 
 function handleAnswer(answer) {
+  state.aiAdaptation = null;
+  state.aiRequestedQuestionId = null;
+  state.aiRequestId += 1;
   const result = recordAnswer(answer);
   if (result.done) {
     renderResult();
@@ -2748,6 +2811,9 @@ function resetApp() {
   state.investigationPath = [];
   state.debugEvents = [];
   state.questions = [];
+  state.aiAdaptation = null;
+  state.aiRequestedQuestionId = null;
+  state.aiRequestId += 1;
   resetScores();
   startForm.reset();
   showScreen("home");

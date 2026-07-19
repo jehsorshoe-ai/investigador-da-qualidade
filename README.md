@@ -41,3 +41,7 @@ Para publicar no GitHub Pages, envie estes arquivos para um repositório e ative
 - Criar biblioteca de problemas por segmento.
 - Exportar relatório em PDF.
 - Adicionar login para empresas.
+
+## IA opcional
+
+O app inclui um adaptador opcional para o Gemini. A IA adapta a linguagem de uma pergunta que o motor já selecionou, mas não pode criar causas, alterar respostas ou encerrar a investigação. Veja a configuração segura em [docs/GEMINI_SETUP.md](docs/GEMINI_SETUP.md).
