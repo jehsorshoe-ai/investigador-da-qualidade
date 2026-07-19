@@ -1545,6 +1545,38 @@ body[data-view="home"] .home-panel-stack {
   }
 }
 
+@media (min-width: 3000px) {
+  .brand-lockup,
+  .stage-status {
+    left: 12vw;
+  }
+
+  .stage-copy {
+    padding-right: 58vw;
+    padding-left: 12vw;
+  }
+
+  .stage-copy h1 {
+    font-size: 12rem;
+  }
+
+  .hero-promise {
+    max-width: 860px;
+    font-size: 3.2rem;
+  }
+
+  .stage-copy .lead {
+    max-width: 720px;
+    font-size: 1.5rem;
+  }
+
+  .stage-action {
+    min-width: 300px;
+    min-height: 72px;
+    font-size: 1.1rem;
+  }
+}
+
 @media (max-width: 760px) {
   .brand-lockup {
     position: absolute;
