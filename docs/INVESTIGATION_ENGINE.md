@@ -95,12 +95,21 @@ Perguntas possuem metadados:
   id,
   text,
   type,
+  path,
   category,
+  hypothesis,
   parentQuestionId,
   triggerAnswer,
+  requiresFacts,
+  requiresAnyFacts,
+  excludesFacts,
+  allowedDomains,
+  allowedPhenomena,
   triggerFacts,
   triggerAllFacts,
   requiredAsked,
+  causalDepth,
+  informationTarget,
   questionPurpose,
   targetHypothesis,
   expectedInformationGain,
@@ -119,6 +128,10 @@ Tipos suportados no motor:
 
 No app atual, a UI renderiza `BOOLEAN` e `MULTIPLE_CHOICE`. Os demais tipos existem como contrato para expansao controlada.
 
+Antes de uma pergunta disputar score, `isQuestionEligible()` aplica bloqueios duros: pergunta ja feita, pergunta pai ausente, fato obrigatorio ausente, nenhum fato habilitador encontrado, fato contraditorio presente, dominio/fenomeno incompativel ou rota primaria travada sem evidencias suficientes para transicao.
+
+Depois disso, `evaluateQuestionCandidate()` calcula score por categoria, hipotese, continuidade causal, ganho de informacao e penalidades.
+
 ## State Machine
 
 `state` guarda:
@@ -126,6 +139,9 @@ No app atual, a UI renderiza `BOOLEAN` e `MULTIPLE_CHOICE`. Os demais tipos exis
 - `originalProblem`
 - `normalizedProblem`
 - `classification`
+- `primaryInvestigationPath`
+- `allowedInvestigationPaths`
+- `pathLock`
 - `answers`
 - `evidence`
 - `activeHypotheses`
@@ -138,11 +154,13 @@ No app atual, a UI renderiza `BOOLEAN` e `MULTIPLE_CHOICE`. Os demais tipos exis
 
 `getNextQuestion` e representado por `nextQuestionIndex()`. A prioridade e:
 
-1. Perguntas da rota com maior ganho investigativo.
-2. Perguntas condicionais ativadas por fatos confirmados.
-3. Cobertura dos pilares Pessoas, Produto e Processo.
-4. Categorias com maior pontuacao.
+1. Perguntas condicionais da rota ativadas pela ultima resposta.
+2. Pergunta de abertura da rota, quando ainda nao houve resposta.
+3. Perguntas elegiveis por score causal.
+4. Cobertura dos pilares Pessoas, Produto e Processo.
 5. Fallback sem repetir pergunta.
+
+`primaryInvestigationPath` define a linha exibida na UI. A linha visual nao deve mudar porque uma pergunta secundaria existe no banco; so muda por `PATH_TRANSITION` quando ha fatos suficientes e score superior.
 
 ## Causal Continuity
 
@@ -185,6 +203,28 @@ tempo de resposta confirmado
 ```
 
 Nao perguntar sobre promessa comercial nesse ponto.
+
+Exemplo de regressao corrigida:
+
+```text
+Problema: Cliente reclamou de mau atendimento.
+SIM: O cliente reclama do tempo de resposta?
+NAO: As reclamacoes se concentram em algumas pessoas?
+SIM: Existe um padrao claro de como a equipe deve conduzir esse atendimento?
+SIM: A equipe demonstra dificuldade tecnica para executar essa atividade corretamente?
+```
+
+Resultado esperado:
+
+```text
+primaryInvestigationPath: SERVICE_FAILURE
+pathLock: true
+proxima pergunta: Em qual parte do atendimento a dificuldade tecnica aparece com mais frequencia?
+hipotese dominante: technical_skill_gap
+perguntas de promessa: bloqueadas por missing_any_required_fact e/ou path_locked_without_transition_evidence
+```
+
+Perguntas de proposta de valor so ficam elegiveis quando o relato inicial ou respostas anteriores criam fatos como `promise_exists`, `expectation_mismatch`, `delivery_vs_promise_gap`, `commercial_commitment` ou `broken_promise`.
 
 ## Service Failure
 
@@ -244,6 +284,10 @@ Evento
 
 Isso e para desenvolvimento e testes. Nao aparece para o usuario final.
 
+`traceQuestionSelection()` expoe candidatos elegiveis e bloqueados, score por criterio, caminho primario, hipoteses e motivo da pergunta escolhida.
+
+No navegador, `?debugInvestigation=true` habilita um painel visual temporario com caminho primario, trava de rota, fatos recentes, proxima hipotese e candidato selecionado.
+
 ## Fallback Seguro
 
 Se a confianca nao for suficiente, o motor nunca escolhe uma arvore aleatoria. Ele usa:
@@ -265,6 +309,8 @@ Rodar:
 ```bash
 node --check app.js
 node tests/engine.test.js
+node tests/service-failure-technical-gap.test.js
+node tests/audit-question-eligibility.js
 node tests/service-debug.js
 node tests/causal-continuity-debug.js
 ```
@@ -277,3 +323,5 @@ Regressoes obrigatorias:
 - `Vendemos muitas propostas, mas poucos clientes fecham.` deve cair em funil/conversao.
 - `O caminhao voltou para oficina pela mesma falha.` deve cair em retrabalho/falha tecnica.
 - `A nota fiscal saiu com dados incorretos.` deve cair em processo documental.
+- A sequencia de atendimento com dificuldade tecnica confirmada nao pode saltar para promessa, proposta, preco, funil, conversao ou venda.
+- Perguntas de promessa/proposta de valor so podem ser elegiveis quando existem fatos de promessa ou expectativa.

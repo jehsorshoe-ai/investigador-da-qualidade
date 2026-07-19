@@ -334,6 +334,43 @@ li + li {
   padding-bottom: 24px;
 }
 
+.debug-investigation {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 20;
+  width: min(380px, calc(100vw - 24px));
+  max-height: 46vh;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  border-radius: 8px;
+  background: rgba(8, 12, 20, 0.96);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  color: #dbeafe;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.debug-investigation strong,
+.debug-investigation span {
+  display: block;
+}
+
+.debug-investigation strong {
+  color: var(--accent-2);
+  margin-bottom: 6px;
+}
+
+.debug-investigation details {
+  margin-top: 8px;
+}
+
+.debug-investigation pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 @media (min-width: 760px) {
   .app-shell {
     padding-top: 42px;

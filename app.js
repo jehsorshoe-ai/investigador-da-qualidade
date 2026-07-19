@@ -67,6 +67,7 @@ const questionTypes = {
 const investigationLineLabels = {
   SERVICE_FAILURE: "Falha de atendimento",
   CUSTOMER_COMPLAINT: "Reclamacao de cliente",
+  VALUE_PROPOSITION_MISMATCH: "Proposta de valor desalinhada",
   FUNNEL_COMMERCIAL: "Funil comercial",
   COMMERCIAL_CONVERSION: "Conversao comercial",
   TECHNICAL_REWORK: "Retrabalho tecnico",
@@ -82,6 +83,13 @@ const classificationTargets = {
     line: "SERVICE_FAILURE",
     area: "service",
     categories: ["customer", "method", "people", "measurement", "tools"],
+  },
+  valueProposition: {
+    phenomenon: "delivery_expectation_gap",
+    domain: "atendimento",
+    line: "VALUE_PROPOSITION_MISMATCH",
+    area: "service",
+    categories: ["customer", "offer", "method", "measurement", "people"],
   },
   salesFunnel: {
     phenomenon: "queda_vendas",
@@ -352,8 +360,21 @@ const categories = {
 const questionBank = [
   {
     text: "A equipe demonstra dificuldade tecnica para executar essa atividade corretamente?",
+    id: "technical_execution_difficulty",
     category: "people",
     areas: ["service", "commercial", "operations", "product", "people"],
+    path: "SERVICE_FAILURE",
+    questionPurpose: "confirmar_dificuldade_tecnica",
+    targetHypothesis: "technical_skill_gap",
+    factsOnPositive: ["technical_execution_difficulty"],
+    factsOnNegative: ["technical_execution_not_difficult"],
+    hypothesisDelta: {
+      yes: { technical_skill_gap: 2.4, knowledge_gap: 1.1, training_gap: 0.9, procedure_usability: 0.7, system_support: 0.5 },
+      partial: { technical_skill_gap: 1.2, knowledge_gap: 0.6, training_gap: 0.5 },
+      no: { technical_skill_gap: -1.5, individual_behavior_problem: -0.5 },
+      unknown: { technical_skill_gap: 0.2 },
+    },
+    expectedInformationGain: 0.82,
     evidence: "O problema pode envolver habilidade tecnica insuficiente.",
   },
   {
@@ -373,12 +394,32 @@ const questionBank = [
     text: "O cliente esperava algo diferente do que recebeu?",
     category: "customer",
     areas: ["service", "commercial", "product"],
+    path: "VALUE_PROPOSITION_MISMATCH",
+    hypothesis: "value_proposition_mismatch",
+    targetHypothesis: "expectation_mismatch",
+    requiresAnyFacts: ["promise_exists", "expectation_mismatch", "delivery_vs_promise_gap", "broken_promise"],
+    allowedPhenomena: ["delivery_expectation_gap", "commercial_complaint"],
+    allowedDomains: ["atendimento", "comercial", "produto"],
+    causalDepth: 1,
+    informationTarget: "expectation_gap",
+    questionPurpose: "confirmar_expectativa_diferente",
+    expectedInformationGain: 0.7,
     evidence: "Pode haver diferenca entre a expectativa criada e a experiencia entregue.",
   },
   {
     text: "A promessa feita ao cliente mudou antes do problema comecar?",
     category: "offer",
     areas: ["operations", "product", "service", "commercial"],
+    path: "VALUE_PROPOSITION_MISMATCH",
+    hypothesis: "value_proposition_mismatch",
+    targetHypothesis: "value_proposition_mismatch",
+    requiresAnyFacts: ["promise_exists", "promise_changed", "expectation_mismatch", "commercial_commitment", "delivery_vs_promise_gap"],
+    allowedPhenomena: ["commercial_complaint", "delivery_expectation_gap", "insatisfacao_cliente"],
+    allowedDomains: ["comercial", "atendimento", "produto"],
+    causalDepth: 2,
+    informationTarget: "promise_change",
+    questionPurpose: "testar_mudanca_de_promessa",
+    expectedInformationGain: 0.72,
     evidence: "Mudanca na promessa, pacote ou condicao vendida pode ter iniciado o problema.",
   },
   {
@@ -460,9 +501,21 @@ const questionBank = [
   },
   {
     text: "Existe um padrão claro de como a equipe deve conduzir esse atendimento?",
+    id: "service_clear_standard",
     category: "method",
     areas: ["service"],
     reverse: true,
+    questionPurpose: "testar_padrao_de_atendimento",
+    targetHypothesis: "service_standard_gap",
+    factsOnPositive: ["service_standard_defined"],
+    factsOnNegative: ["service_standard_missing"],
+    hypothesisDelta: {
+      yes: { service_standard_gap: -1, procedure_usability: 0.3 },
+      partial: { service_standard_gap: 1, procedure_usability: 0.6 },
+      no: { service_standard_gap: 2, procedure_usability: 0.8 },
+      unknown: { service_standard_gap: 0.4 },
+    },
+    expectedInformationGain: 0.74,
     evidence: "O padrão de atendimento pode não estar claro para a equipe.",
   },
   {
@@ -485,8 +538,20 @@ const questionBank = [
   },
   {
     text: "As reclamações se concentram em algumas pessoas?",
+    id: "service_people_concentration",
     category: "people",
     areas: ["service"],
+    questionPurpose: "testar_variacao_por_pessoa",
+    targetHypothesis: "individual_behavior_problem",
+    factsOnPositive: ["people_concentration"],
+    factsOnNegative: ["no_people_concentration"],
+    hypothesisDelta: {
+      yes: { individual_behavior_problem: 1.8, communication_skill_gap: 0.7 },
+      partial: { individual_behavior_problem: 0.8 },
+      no: { individual_behavior_problem: -1.2, process_or_training_systemic: 1 },
+      unknown: { individual_behavior_problem: 0.2 },
+    },
+    expectedInformationGain: 0.64,
     evidence: "A variação pode estar relacionada a pessoas específicas.",
   },
   {
@@ -561,7 +626,7 @@ const questionBank = [
   {
     text: "A equipe domina bem os diferenciais da oferta?",
     category: "people",
-    areas: ["commercial", "product", "service"],
+    areas: ["commercial", "product"],
     reverse: true,
     evidence: "Pode faltar dominio sobre diferenciais e argumentos.",
   },
@@ -594,6 +659,16 @@ const questionBank = [
     text: "A promessa feita antes da entrega esta alinhada com o que o cliente recebe?",
     category: "customer",
     areas: ["service", "operations", "product", "commercial"],
+    path: "VALUE_PROPOSITION_MISMATCH",
+    hypothesis: "value_proposition_mismatch",
+    targetHypothesis: "value_proposition_mismatch",
+    requiresAnyFacts: ["promise_exists", "expectation_mismatch", "commercial_commitment", "delivery_vs_promise_gap", "broken_promise"],
+    allowedPhenomena: ["commercial_complaint", "delivery_expectation_gap", "insatisfacao_cliente"],
+    allowedDomains: ["comercial", "atendimento", "produto"],
+    causalDepth: 2,
+    informationTarget: "promise_delivery_alignment",
+    questionPurpose: "testar_alinhamento_promessa_entrega",
+    expectedInformationGain: 0.76,
     reverse: true,
     evidence: "Pode haver desalinhamento entre promessa e entrega.",
   },
@@ -671,6 +746,12 @@ const questionBank = [
     text: "Mesmo fazendo do jeito combinado pela empresa, o cliente continua reclamando?",
     category: "customer",
     areas: ["service", "operations", "product"],
+    path: "SERVICE_FAILURE",
+    targetHypothesis: "standard_customer_expectation_gap",
+    triggerFacts: ["service_standard_defined"],
+    excludesFacts: ["technical_execution_difficulty"],
+    questionPurpose: "testar_adequacao_do_padrao_a_expectativa",
+    expectedInformationGain: 0.64,
     evidence: "A expectativa externa pode estar diferente do padrao interno.",
   },
   {
@@ -886,6 +967,88 @@ const investigationRouteQuestions = {
       expectedInformationGain: 0.78,
       reasonForQuestion: "Tempo de resposta foi confirmado; a investigacao precisa separar falha de controle de falta de capacidade.",
       evidence: "A demora pode estar ligada a carga, fila ou capacidade insuficiente.",
+    },
+    {
+      id: "technical_gap_location",
+      text: "Em qual parte do atendimento a dificuldade tecnica aparece com mais frequencia?",
+      type: questionTypes.multipleChoice,
+      path: "SERVICE_FAILURE",
+      category: "people",
+      triggerFacts: ["technical_execution_difficulty"],
+      questionPurpose: "decompor_dificuldade_tecnica",
+      targetHypothesis: "technical_skill_gap",
+      expectedInformationGain: 0.94,
+      parentQuestionId: "technical_execution_difficulty",
+      triggerAnswer: "yes",
+      reasonForQuestion: "Usuario confirmou dificuldade tecnica mesmo com padrao definido; a investigacao precisa localizar onde a dificuldade ocorre.",
+      evidence: "A dificuldade tecnica precisa ser localizada na rotina de atendimento.",
+      options: [
+        {
+          value: "diagnosis",
+          label: "Entender a necessidade do cliente",
+          facts: ["technical_gap_diagnosis"],
+          scores: { people: 1.5, method: 0.8 },
+          evidence: "A dificuldade tecnica aparece ao entender a necessidade do cliente.",
+        },
+        {
+          value: "information",
+          label: "Encontrar a informacao correta",
+          facts: ["knowledge_gap", "information_access_gap"],
+          scores: { people: 1, tools: 1.2, method: 0.6 },
+          evidence: "A dificuldade tecnica envolve encontrar a informacao correta.",
+        },
+        {
+          value: "system",
+          label: "Usar sistema ou ferramenta",
+          facts: ["system_support_gap"],
+          scores: { tools: 1.8, people: 0.6 },
+          evidence: "A dificuldade tecnica envolve sistema ou ferramenta.",
+        },
+        {
+          value: "procedure",
+          label: "Seguir o procedimento",
+          facts: ["procedure_usability_gap"],
+          scores: { method: 1.5, people: 0.6 },
+          evidence: "A dificuldade tecnica envolve aplicar o procedimento.",
+        },
+        {
+          value: "communication",
+          label: "Explicar a solucao ao cliente",
+          facts: ["communication_skill_gap"],
+          scores: { people: 1.5, method: 0.5 },
+          evidence: "A dificuldade tecnica envolve explicar a solucao ao cliente.",
+        },
+      ],
+    },
+    {
+      id: "formal_training_for_activity",
+      text: "Existe treinamento formal para essa atividade de atendimento?",
+      type: questionTypes.boolean,
+      path: "SERVICE_FAILURE",
+      category: "people",
+      reverse: true,
+      triggerFacts: ["technical_execution_difficulty"],
+      questionPurpose: "testar_treinamento",
+      targetHypothesis: "training_gap",
+      expectedInformationGain: 0.84,
+      parentQuestionId: "technical_execution_difficulty",
+      triggerAnswer: "yes",
+      reasonForQuestion: "Dificuldade tecnica foi confirmada; agora e preciso verificar se existe treinamento formal para a atividade.",
+      evidence: "Pode faltar treinamento formal para executar corretamente o atendimento.",
+    },
+    {
+      id: "procedure_information_sufficient",
+      text: "O procedimento traz informacao suficiente para executar corretamente?",
+      type: questionTypes.boolean,
+      path: "SERVICE_FAILURE",
+      category: "method",
+      reverse: true,
+      triggerFacts: ["technical_execution_difficulty", "procedure_usability_gap"],
+      questionPurpose: "testar_usabilidade_do_procedimento",
+      targetHypothesis: "procedure_usability",
+      expectedInformationGain: 0.78,
+      reasonForQuestion: "Dificuldade tecnica foi confirmada; a investigacao precisa separar falha de habilidade de falha no procedimento.",
+      evidence: "O procedimento pode nao orientar bem a execucao correta.",
     },
   ],
   FUNNEL_COMMERCIAL: [
@@ -1104,6 +1267,9 @@ const state = {
   normalizedProblem: {},
   classification: null,
   route: null,
+  primaryInvestigationPath: null,
+  allowedInvestigationPaths: [],
+  pathLock: false,
   segment: "generic",
   area: "operations",
   selectedArea: "auto",
@@ -1117,6 +1283,7 @@ const state = {
   confirmedFactDetails: {},
   unresolvedQuestions: [],
   hypothesisScores: {},
+  lastAnswerContext: null,
   currentDepth: 0,
   investigationPath: [],
   debugEvents: [],
@@ -1139,6 +1306,9 @@ const questionCategory = isBrowser ? document.querySelector("#questionCategory")
 const contextLine = isBrowser ? document.querySelector("#contextLine") : null;
 const historyList = isBrowser ? document.querySelector("#historyList") : null;
 const answerGrid = isBrowser ? document.querySelector("#answerGrid") : null;
+const debugInvestigation =
+  isBrowser && new URLSearchParams(window.location.search).get("debugInvestigation") === "true";
+const debugPanel = ensureDebugPanel();
 
 function stripAccents(value) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -1168,6 +1338,8 @@ function createClassification(target, details) {
     route: target.line,
     area: target.area,
     reason: details.reason,
+    initialFacts: details.initialFacts || [],
+    initialHypotheses: details.initialHypotheses || {},
   };
 }
 
@@ -1204,7 +1376,29 @@ function classifyProblem(problem, selectedArea = "auto") {
   ]);
   const productFailure = hasPattern(text, [/\b(produto|servico|item|peca).*\b(defeito|falha|quebrado|nao funciona)\b/]);
   const delaySignal = hasPattern(text, [/\b(atraso|demora|prazo vencido|espera excessiva)\b/]);
+  const promiseSignal = hasPattern(text, [
+    /\b(prometeu|prometeram|promessa|prometido|garantiu|garantiram|combinou|combinado)\b/,
+    /\b(vendedor|consultor|comercial).*\b(entrega|prazo|condicao|valor|resultado|beneficio)\b/,
+    /\b(entrega|prazo|condicao|valor|resultado|beneficio).*\b(diferente|mudou|nao cumpriu|descumpriu|nao entregou)\b/,
+  ]);
   const ambiguousComplaint = complaintSignal && hasPattern(text, [/\b(proposta|preco|valor|produto|servico|entrega)\b/]);
+
+  if (promiseSignal) {
+    return createClassification(classificationTargets.valueProposition, {
+      subdomain: "expectativa_promessa_entrega",
+      object: hasPattern(text, [/\b(produto|servico|entrega)\b/]) ? "produto_ou_servico" : "cliente",
+      symptom: "expectativa combinada diferente da experiencia entregue",
+      event: "quebra_de_expectativa",
+      impact: commercialImpact ? "perda_comercial" : "insatisfacao_cliente",
+      context: selectedAreaContext || "atendimento_ao_cliente",
+      confidence: 0.88,
+      possibleLines: ["VALUE_PROPOSITION_MISMATCH", "SERVICE_FAILURE", "GENERAL_CAUSAL_INVESTIGATION"],
+      initialFacts: ["promise_exists", "expectation_mismatch", "delivery_vs_promise_gap", "commercial_commitment"],
+      initialHypotheses: { value_proposition_mismatch: 2.4, broken_promise: 1.5 },
+      reason:
+        "O relato indica promessa, condicao ou expectativa combinada que ficou diferente da experiencia entregue ao cliente.",
+    });
+  }
 
   if (serviceManifestation) {
     return createClassification(classificationTargets.serviceFailure, {
@@ -1456,6 +1650,9 @@ function beginInvestigation({ profile, segment, selectedArea, audience, problem 
   state.normalizedProblem = {};
   state.classification = null;
   state.route = null;
+  state.primaryInvestigationPath = null;
+  state.allowedInvestigationPaths = [];
+  state.pathLock = false;
   state.index = 0;
   state.asked = [];
   state.evidence = [];
@@ -1465,6 +1662,7 @@ function beginInvestigation({ profile, segment, selectedArea, audience, problem 
   state.confirmedFactDetails = {};
   state.unresolvedQuestions = [];
   state.hypothesisScores = {};
+  state.lastAnswerContext = null;
   state.currentDepth = 0;
   state.investigationPath = [];
   state.debugEvents = [];
@@ -1473,6 +1671,11 @@ function beginInvestigation({ profile, segment, selectedArea, audience, problem 
   resetScores();
   state.classification = classifyProblem(state.problem, state.selectedArea);
   state.route = routeInvestigation(state.classification);
+  state.primaryInvestigationPath = state.route.selectedLine;
+  state.allowedInvestigationPaths = [state.route.selectedLine, ...(state.classification.possiveis_linhas || [])].filter(
+    (line, index, all) => line && all.indexOf(line) === index,
+  );
+  state.pathLock = state.route.routeLocked;
   state.normalizedProblem = {
     originalProblem: state.problem,
     normalizedText: stripAccents(state.problem),
@@ -1487,6 +1690,14 @@ function beginInvestigation({ profile, segment, selectedArea, audience, problem 
     contradictingEvidence: [],
   }));
   state.hypothesisScores = Object.fromEntries(state.activeHypotheses.map((hypothesis) => [hypothesis.id, hypothesis.score]));
+  registerFacts(state.classification.initialFacts, {
+    questionId: "classification",
+    answer: "classified",
+    evidence: state.classification.reason,
+  });
+  Object.entries(state.classification.initialHypotheses || {}).forEach(([hypothesis, score]) => {
+    registerHypothesis(hypothesis, score, state.classification.reason);
+  });
   state.debugEvents.push({
     type: "classification",
     classification: state.classification,
@@ -1599,23 +1810,234 @@ function askedQuestionIds() {
   return new Set(state.asked.map((item) => item.questionId).filter(Boolean));
 }
 
-function canAskQuestion(question, askedIndexes) {
-  if (askedIndexes.has(state.questions.indexOf(question))) return false;
+function questionPath(question) {
+  return question.path || state.primaryInvestigationPath || state.route?.selectedLine;
+}
+
+function questionHypothesis(question) {
+  return question.hypothesis || question.targetHypothesis || question.category;
+}
+
+function matchingFacts(facts = []) {
+  return facts.filter((fact) => state.confirmedFacts.includes(fact));
+}
+
+function pathTransitionEvidenceCount(question) {
+  return new Set([...matchingFacts(question.requiresFacts), ...matchingFacts(question.requiresAnyFacts)]).size;
+}
+
+function isQuestionEligible(question, index, askedIndexes) {
+  const hardBlocks = [];
+  if (askedIndexes.has(index)) hardBlocks.push("already_asked");
   const askedIds = askedQuestionIds();
-  if (question.requiredAsked?.some((id) => !askedIds.has(id))) return false;
-  if (question.triggerAllFacts?.length) {
-    return question.triggerAllFacts.every((fact) => state.confirmedFacts.includes(fact));
+  if (question.requiredAsked?.some((id) => !askedIds.has(id))) hardBlocks.push("missing_required_question");
+  if (question.requiresFacts?.some((fact) => !state.confirmedFacts.includes(fact))) hardBlocks.push("missing_required_fact");
+  if (question.requiresAnyFacts?.length && !question.requiresAnyFacts.some((fact) => state.confirmedFacts.includes(fact))) {
+    hardBlocks.push("missing_any_required_fact");
   }
-  if (question.triggerFacts?.length) {
-    return question.triggerFacts.some((fact) => state.confirmedFacts.includes(fact));
+  if (question.excludesFacts?.some((fact) => state.confirmedFacts.includes(fact))) hardBlocks.push("excluded_by_fact");
+  if (question.allowedPhenomena?.length && !question.allowedPhenomena.includes(state.classification?.fenomeno)) {
+    hardBlocks.push("phenomenon_not_allowed");
   }
-  if (state.route?.selectedLine === "SERVICE_FAILURE") {
-    const needsCommercialEvidence = /promessa|proposta|preco|valor|funil|convers|fechamento|venda/i.test(question.text);
-    if (needsCommercialEvidence && !state.confirmedFacts.includes("broken_promise") && !state.confirmedFacts.includes("route_sales")) {
-      return false;
-    }
+  if (question.allowedDomains?.length && !question.allowedDomains.includes(state.classification?.dominio)) {
+    hardBlocks.push("domain_not_allowed");
   }
-  return true;
+  if (question.triggerAllFacts?.length && !question.triggerAllFacts.every((fact) => state.confirmedFacts.includes(fact))) {
+    hardBlocks.push("missing_all_trigger_facts");
+  }
+  if (question.triggerFacts?.length && !question.triggerFacts.some((fact) => state.confirmedFacts.includes(fact))) {
+    hardBlocks.push("missing_trigger_fact");
+  }
+  const path = questionPath(question);
+  if (state.pathLock && path && path !== state.primaryInvestigationPath && pathTransitionEvidenceCount(question) < 2) {
+    hardBlocks.push("path_locked_without_transition_evidence");
+  }
+  return {
+    eligible: hardBlocks.length === 0,
+    hardBlocks,
+    path,
+    hypothesis: questionHypothesis(question),
+  };
+}
+
+function canAskQuestion(question, askedIndexes) {
+  return isQuestionEligible(question, state.questions.indexOf(question), askedIndexes).eligible;
+}
+
+function continuityScoreForQuestion(question) {
+  const last = state.lastAnswerContext;
+  if (!last) return 0;
+  let score = 0;
+  const triggerFacts = [...(question.triggerFacts || []), ...(question.triggerAllFacts || [])];
+  if (triggerFacts.some((fact) => last.facts.includes(fact))) score += 2.4;
+  if (question.triggerAllFacts?.length && question.triggerAllFacts.every((fact) => state.confirmedFacts.includes(fact))) score += 1.8;
+  if (question.parentQuestionId && question.parentQuestionId === last.questionId) score += 2;
+  if (last.raisedHypotheses.includes(questionHypothesis(question))) score += 2;
+  if (question.category === last.category) score += 0.4;
+  if (!triggerFacts.length && state.currentDepth > 0) score -= 0.4;
+  return score;
+}
+
+function evaluateQuestionCandidate(question, index, askedIndexes) {
+  const eligibility = isQuestionEligible(question, index, askedIndexes);
+  const categoryScore = state.scores[question.category] || 0;
+  const causalScore = state.hypothesisScores[eligibility.hypothesis] || 0;
+  const continuityScore = continuityScoreForQuestion(question);
+  const informationGain = question.expectedInformationGain || 0.45;
+  const penalties = [];
+  if (categoryAskedCount(question.category) >= 3) penalties.push({ reason: "category_saturated", value: 2 });
+  if (recentlyAskedSameCategory(question.category)) penalties.push({ reason: "recent_same_category", value: 1.2 });
+  if (state.rejectedHypotheses.includes(eligibility.hypothesis)) penalties.push({ reason: "hypothesis_rejected", value: 2 });
+  if (state.pathLock && eligibility.path !== state.primaryInvestigationPath) penalties.push({ reason: "secondary_path", value: 1.5 });
+  const penaltyTotal = penalties.reduce((sum, penalty) => sum + penalty.value, 0);
+  const score = eligibility.eligible
+    ? categoryScore + causalScore * 1.6 + continuityScore + informationGain * 3 - penaltyTotal
+    : Number.NEGATIVE_INFINITY;
+  return {
+    index,
+    id: question.id,
+    text: question.text,
+    path: eligibility.path,
+    category: question.category,
+    hypothesis: eligibility.hypothesis,
+    eligible: eligibility.eligible,
+    hardBlocks: eligibility.hardBlocks,
+    categoryScore,
+    causalScore,
+    continuityScore,
+    informationGain,
+    penalties,
+    finalScore: score,
+    reasonForQuestion: deriveReasonForQuestion(question),
+  };
+}
+
+function evaluateQuestionCandidates(askedIndexes = new Set(state.asked.map((item) => item.index))) {
+  return state.questions.map((question, index) => evaluateQuestionCandidate(question, index, askedIndexes));
+}
+
+function traceQuestionSelection() {
+  const askedIndexes = new Set(state.asked.map((item) => item.index));
+  const candidates = evaluateQuestionCandidates(askedIndexes);
+  const routeQuestionIds = new Set((investigationRouteQuestions[state.route?.selectedLine] || []).map((question) => question.id));
+  const eligible = candidates
+    .filter((candidate) => candidate.eligible)
+    .sort((a, b) => b.finalScore - a.finalScore);
+  const triggeredRoute = eligible
+    .filter((candidate) => routeQuestionIds.has(candidate.id) && isSpecificTriggeredRouteQuestion(state.questions[candidate.index]))
+    .sort((a, b) => b.finalScore - a.finalScore);
+  const openingRoute = eligible
+    .filter((candidate) => routeQuestionIds.has(candidate.id))
+    .sort((a, b) => b.informationGain - a.informationGain || b.finalScore - a.finalScore);
+  const selected = triggeredRoute[0] || (!state.asked.length && openingRoute[0]) || eligible[0] || null;
+  return {
+    activeInvestigationPath: state.primaryInvestigationPath,
+    allowedInvestigationPaths: state.allowedInvestigationPaths,
+    pathLock: state.pathLock,
+    candidateQuestions: candidates,
+    candidateHypotheses: state.activeHypotheses,
+    hypothesisScores: state.hypothesisScores,
+    categoryScores: state.scores,
+    selected,
+    blocked: candidates.filter((candidate) => !candidate.eligible),
+  };
+}
+
+function isSpecificTriggeredRouteQuestion(question) {
+  return Boolean(question.id && (question.triggerFacts?.length || question.triggerAllFacts?.length || question.requiredAsked?.length));
+}
+
+function selectNextQuestionIndex(askedIndexes) {
+  const candidates = evaluateQuestionCandidates(askedIndexes);
+  const routeQuestionIds = new Set((investigationRouteQuestions[state.route?.selectedLine] || []).map((question) => question.id));
+  const eligible = candidates.filter((candidate) => candidate.eligible);
+  const triggeredRoute = eligible
+    .filter((candidate) => routeQuestionIds.has(candidate.id) && isSpecificTriggeredRouteQuestion(state.questions[candidate.index]))
+    .sort((a, b) => b.finalScore - a.finalScore);
+  if (triggeredRoute.length) return triggeredRoute[0].index;
+
+  const openingRoute = eligible
+    .filter((candidate) => routeQuestionIds.has(candidate.id))
+    .sort((a, b) => b.informationGain - a.informationGain || b.finalScore - a.finalScore);
+  if (!state.asked.length && openingRoute.length) return openingRoute[0].index;
+
+  const ranked = eligible.sort((a, b) => b.finalScore - a.finalScore);
+  if (ranked.length) return ranked[0].index;
+
+  const fallback = candidates.find((candidate) => candidate.hardBlocks.length === 1 && candidate.hardBlocks[0] === "path_locked_without_transition_evidence");
+  if (fallback) return fallback.index;
+  return -1;
+}
+
+function hasPathTransitionSupport(nextPath) {
+  if (!nextPath || nextPath === state.primaryInvestigationPath) return true;
+  const transitionFacts = {
+    VALUE_PROPOSITION_MISMATCH: ["promise_exists", "promise_changed", "expectation_mismatch", "commercial_commitment", "delivery_vs_promise_gap", "broken_promise"],
+    FUNNEL_COMMERCIAL: ["route_sales", "sales_proposal", "sales_closing", "sales_lead_generation"],
+  }[nextPath] || [];
+  const factCount = transitionFacts.filter((fact) => state.confirmedFacts.includes(fact)).length;
+  const nextScore = state.hypothesisScores[nextPath] || state.hypothesisScores.value_proposition_mismatch || 0;
+  const currentScore = state.hypothesisScores[state.primaryInvestigationPath] || 0;
+  return factCount >= 2 && nextScore > currentScore + 2;
+}
+
+function maybeTransitionPrimaryPath(nextQuestion) {
+  const nextPath = questionPath(nextQuestion);
+  if (!state.pathLock || !nextPath || nextPath === state.primaryInvestigationPath) return null;
+  if (!hasPathTransitionSupport(nextPath)) return null;
+  const transition = {
+    type: "PATH_TRANSITION",
+    from: state.primaryInvestigationPath,
+    to: nextPath,
+    reasonForTransition: `Hipotese ${questionHypothesis(nextQuestion)} possui fatos suficientes e score superior para mudar a rota primaria.`,
+  };
+  state.primaryInvestigationPath = nextPath;
+  state.debugEvents.push(transition);
+  return transition;
+}
+
+function topHypotheses(limit = 5) {
+  return [...state.activeHypotheses]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+}
+
+function questionDisplayPath(question) {
+  return investigationLineLabels[state.primaryInvestigationPath] || investigationLineLabels[questionPath(question)] || categories[question.category].title;
+}
+
+function questionContextPath() {
+  return investigationLineLabels[state.primaryInvestigationPath] || investigationLineLabels[state.route?.selectedLine] || areaLabels[state.area];
+}
+
+function updateDebugPanel() {
+  if (!isBrowser || !debugInvestigation || !debugPanel) return;
+  const question = currentQuestion();
+  const trace = traceQuestionSelection();
+  debugPanel.innerHTML = `
+    <strong>DEBUG INVESTIGATION</strong>
+    <span>PRIMARY PATH: ${state.primaryInvestigationPath || "-"}</span>
+    <span>PATH LOCK: ${state.pathLock ? "ON" : "OFF"}</span>
+    <span>LAST FACT: ${state.lastAnswerContext?.facts?.join(", ") || "-"}</span>
+    <span>NEXT TARGET: ${question?.targetHypothesis || question?.category || "-"}</span>
+    <span>WHY: ${question?.reasonForQuestion || deriveReasonForQuestion(question)}</span>
+    <span>TOP HYPOTHESES: ${topHypotheses(3)
+      .map((hypothesis) => `${hypothesis.id} ${hypothesis.score.toFixed(2)}`)
+      .join(" | ")}</span>
+    <details><summary>Candidates</summary><pre>${JSON.stringify(trace.selected, null, 2)}</pre></details>
+  `;
+}
+
+function ensureDebugPanel() {
+  if (!isBrowser || !debugInvestigation) return null;
+  let panel = document.querySelector("#debugInvestigationPanel");
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = "debugInvestigationPanel";
+    panel.className = "debug-investigation";
+    document.body.appendChild(panel);
+  }
+  return panel;
 }
 
 function findHighGainRouteQuestion(askedIndexes) {
@@ -1648,49 +2070,19 @@ function findQuestionByPillar(pillar, askedIndexes) {
 
 function nextQuestionIndex() {
   const askedIndexes = new Set(state.asked.map((item) => item.index));
-  const routeQuestion = findHighGainRouteQuestion(askedIndexes);
-  if (routeQuestion !== -1) return routeQuestion;
-
-  if (state.asked.length >= 1 && state.asked.length < 6) {
-    const rankedPillars = Object.entries(pillarScores())
-      .sort((a, b) => b[1] - a[1])
-      .map(([pillar]) => pillar);
-    const missingPillars = rankedPillars.filter((pillar) => pillarAskedCount(pillar) === 0);
-
-    for (const pillar of missingPillars) {
-      const found = findQuestionByPillar(pillar, askedIndexes);
-      if (found !== -1) return found;
-    }
-  }
-
-  const rankedCategories = Object.entries(state.scores)
-    .sort((a, b) => b[1] - a[1])
-    .map(([category]) => category);
-
-  for (const category of rankedCategories) {
-    if (categoryAskedCount(category) >= 3 || recentlyAskedSameCategory(category)) continue;
-    const targeted = state.questions.findIndex(
-      (question, index) => !askedIndexes.has(index) && question.category === category && canAskQuestion(question, askedIndexes),
-    );
-    if (targeted !== -1) return targeted;
-  }
-
-  return state.questions.findIndex((question, index) => {
-    return !askedIndexes.has(index) && !recentlyAskedSameCategory(question.category) && canAskQuestion(question, askedIndexes);
-  });
+  return selectNextQuestionIndex(askedIndexes);
 }
 
 function renderQuestion() {
   const question = currentQuestion();
   stepLabel.textContent = `Pergunta ${state.asked.length + 1}`;
   questionText.textContent = question.text;
-  questionCategory.textContent = `Linha de investigacao: ${
-    investigationLineLabels[state.route?.selectedLine] || categories[question.category].title
-  }`;
-  contextLine.textContent = `${investigationLineLabels[state.route?.selectedLine] || areaLabels[state.area]} | ${segmentLabels[state.segment]} | ${audienceLabels[state.audience]}`;
+  questionCategory.textContent = `Linha de investigacao: ${questionDisplayPath(question)}`;
+  contextLine.textContent = `${questionContextPath()} | ${segmentLabels[state.segment]} | ${audienceLabels[state.audience]}`;
   progressBar.style.width = `${Math.min(100, (state.asked.length / MAX_QUESTIONS) * 100)}%`;
   renderAnswerControls(question);
   renderHistory();
+  updateDebugPanel();
 }
 
 function booleanOptions() {
@@ -1778,6 +2170,39 @@ function registerHypothesis(id, score = 1, evidence, contradicting = false) {
     score,
     supportingEvidence: evidence && !contradicting ? [evidence] : [],
     contradictingEvidence: evidence && contradicting ? [evidence] : [],
+  });
+}
+
+function pruneContradictedHypotheses() {
+  const contradictionRules = {
+    individual_behavior_problem: ["no_people_concentration"],
+    service_standard_gap: ["service_standard_defined"],
+    technical_skill_gap: ["technical_execution_not_difficult"],
+    value_proposition_mismatch: ["technical_execution_difficulty", "no_people_concentration", "service_standard_defined"],
+    broken_promise: ["technical_execution_difficulty"],
+  };
+
+  Object.entries(contradictionRules).forEach(([hypothesis, contradictingFacts]) => {
+    const hits = contradictingFacts.filter((fact) => state.confirmedFacts.includes(fact));
+    const hasRequiredFacts = ["value_proposition_mismatch", "broken_promise"].includes(hypothesis)
+      ? ["promise_exists", "expectation_mismatch", "delivery_vs_promise_gap", "broken_promise"].some((fact) =>
+          state.confirmedFacts.includes(fact),
+        )
+      : true;
+    if (!hits.length || hasRequiredFacts) return;
+    state.hypothesisScores[hypothesis] = Math.min(state.hypothesisScores[hypothesis] || 0, -0.5);
+    if (!state.rejectedHypotheses.includes(hypothesis)) state.rejectedHypotheses.push(hypothesis);
+    const existing = state.activeHypotheses.find((candidate) => candidate.id === hypothesis);
+    if (existing) {
+      existing.score = Math.min(existing.score, -0.5);
+      hits.forEach((fact) => {
+        if (!existing.contradictingEvidence.includes(fact)) existing.contradictingEvidence.push(fact);
+      });
+    }
+  });
+
+  Object.entries(state.hypothesisScores).forEach(([hypothesis, score]) => {
+    if (score <= -1 && !state.rejectedHypotheses.includes(hypothesis)) state.rejectedHypotheses.push(hypothesis);
   });
 }
 
@@ -1897,6 +2322,19 @@ function recordAnswer(answer) {
     ...(option?.facts ? supportingEvidenceForFacts(option.facts) : []),
     ...supportingEvidenceForFacts(directFacts),
   ];
+  const raisedHypotheses = Object.entries(transitionScoreDelta)
+    .filter(([, delta]) => delta > 0)
+    .map(([hypothesis]) => hypothesis);
+  state.lastAnswerContext = {
+    questionId: question.id,
+    answer,
+    facts: [...(option?.facts || []), ...directFacts],
+    category: question.category,
+    targetHypothesis: question.targetHypothesis,
+    raisedHypotheses,
+    scoreDelta: transitionScoreDelta,
+  };
+  pruneContradictedHypotheses();
 
   if (shouldFinish()) {
     return { done: true, question };
@@ -1905,6 +2343,7 @@ function recordAnswer(answer) {
   const nextIndex = nextQuestionIndex();
   state.index = nextIndex === -1 ? 0 : nextIndex;
   const nextQuestion = currentQuestion();
+  maybeTransitionPrimaryPath(nextQuestion);
   const nextTriggerFacts = [...(nextQuestion?.triggerAllFacts || []), ...(nextQuestion?.triggerFacts || [])];
   const nextSupportingEvidence = supportingEvidenceForFacts(nextTriggerFacts);
   const transition = {
@@ -1917,14 +2356,14 @@ function recordAnswer(answer) {
     reasonForQuestion: deriveReasonForQuestion(nextQuestion),
     supportingEvidence: [...new Set([...supportingEvidence, ...nextSupportingEvidence])],
     scoreDelta: transitionScoreDelta,
-    investigationPath: state.route?.selectedLine,
+    investigationPath: state.primaryInvestigationPath,
   };
   state.debugEvents.push(transition);
   if (nextQuestion) {
     nextQuestion.parentQuestionId = nextQuestion.parentQuestionId || parentQuestionFor(nextQuestion);
     nextQuestion.triggerAnswer = nextQuestion.triggerAnswer || triggerAnswerFor(nextQuestion);
     nextQuestion.reasonForQuestion = deriveReasonForQuestion(nextQuestion);
-    nextQuestion.investigationPath = state.route?.selectedLine;
+    nextQuestion.investigationPath = state.primaryInvestigationPath;
   }
   return { done: false, question, nextQuestion, transition };
 }
@@ -2061,6 +2500,9 @@ function resetApp() {
   state.normalizedProblem = {};
   state.classification = null;
   state.route = null;
+  state.primaryInvestigationPath = null;
+  state.allowedInvestigationPaths = [];
+  state.pathLock = false;
   state.segment = "generic";
   state.area = "operations";
   state.selectedArea = "auto";
@@ -2074,6 +2516,7 @@ function resetApp() {
   state.confirmedFactDetails = {};
   state.unresolvedQuestions = [];
   state.hypothesisScores = {};
+  state.lastAnswerContext = null;
   state.currentDepth = 0;
   state.investigationPath = [];
   state.debugEvents = [];
@@ -2144,5 +2587,10 @@ if (typeof module !== "undefined") {
     topCategoryKey,
     buildReport,
     getDebugRoute,
+    traceQuestionSelection,
+    evaluateQuestionCandidates,
+    isQuestionEligible,
+    questionPath,
+    questionHypothesis,
   };
 }
