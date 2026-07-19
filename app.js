@@ -29,6 +29,33 @@ const audienceLabels = {
   internal: "Equipe interna",
 };
 
+const qualityPillars = {
+  people: {
+    label: "Pessoas",
+    summary: "habilidade tecnica, comportamento, comunicacao, lideranca, treinamento e rotina individual",
+  },
+  product: {
+    label: "Produto",
+    summary: "desenvolvimento, materia-prima, oferta, promessa, publico-alvo e uso real",
+  },
+  process: {
+    label: "Processo",
+    summary: "padrao, fluxo real, medicao, estabilidade, desperdicios, controles e rotina de gestao",
+  },
+};
+
+const categoryPillars = {
+  market: "product",
+  offer: "product",
+  funnel: "process",
+  people: "people",
+  method: "process",
+  measurement: "process",
+  tools: "process",
+  input: "product",
+  customer: "product",
+};
+
 const areaKeywords = {
   commercial: {
     venda: 3,
@@ -245,6 +272,51 @@ const categories = {
 };
 
 const questionBank = [
+  {
+    text: "A causa parece estar mais ligada a habilidade tecnica, postura/comunicacao ou falta de rotina?",
+    category: "people",
+    areas: ["service", "commercial", "operations", "product", "people"],
+    evidence: "O problema pode envolver habilidade tecnica, comportamento ou disciplina de rotina.",
+  },
+  {
+    text: "As pessoas sabem exatamente qual comportamento e esperado nessa situacao?",
+    category: "people",
+    areas: ["service", "commercial", "operations", "product", "people"],
+    reverse: true,
+    evidence: "Pode faltar clareza sobre o comportamento esperado.",
+  },
+  {
+    text: "O produto ou servico foi desenhado para o publico que esta usando ou reclamando?",
+    category: "customer",
+    areas: ["service", "commercial", "product"],
+    reverse: true,
+    evidence: "Pode haver desalinhamento entre produto, servico e publico real.",
+  },
+  {
+    text: "O problema apareceu depois de mudar produto, fornecedor, materia-prima, cardapio, catalogo ou versao?",
+    category: "input",
+    areas: ["operations", "product", "service", "commercial"],
+    evidence: "Mudanca em produto, fornecedor ou insumo pode ter iniciado o problema.",
+  },
+  {
+    text: "O jeito real de executar hoje e diferente do padrao que foi desenhado?",
+    category: "method",
+    areas: ["service", "commercial", "operations", "product", "people", "finance"],
+    evidence: "Ha diferenca entre processo projetado e rotina real.",
+  },
+  {
+    text: "A equipe consegue perceber rapidamente quando a rotina saiu do normal?",
+    category: "measurement",
+    areas: ["service", "commercial", "operations", "product", "people", "finance"],
+    reverse: true,
+    evidence: "Pode faltar controle visual ou sinal claro de desvio.",
+  },
+  {
+    text: "O problema envolve espera, retrabalho, excesso de etapas, deslocamento ou aprovacao desnecessaria?",
+    category: "method",
+    areas: ["service", "commercial", "operations", "product", "finance"],
+    evidence: "O fluxo pode ter desperdicios ou etapas que reduzem qualidade.",
+  },
   {
     text: "A reclamação acontece mais em um canal específico de atendimento?",
     category: "customer",
@@ -640,7 +712,13 @@ function seedScores() {
 }
 
 function buildQuestionSet() {
-  const base = questionBank.filter((question) => question.areas.includes(state.area));
+  const base = questionBank
+    .filter((question) => question.areas.includes(state.area))
+    .sort((a, b) => {
+      const aSpecific = a.areas.length === 1 && a.areas[0] === state.area ? 1 : 0;
+      const bSpecific = b.areas.length === 1 && b.areas[0] === state.area ? 1 : 0;
+      return bSpecific - aSpecific;
+    });
   const generic = questionBank.filter(
     (question) =>
       !question.areas.includes(state.area) &&
@@ -683,6 +761,23 @@ function confidence() {
   return Math.min(92, Math.round((top / total) * 100));
 }
 
+function questionPillar(question) {
+  return categoryPillars[question.category] || "process";
+}
+
+function pillarScores() {
+  return Object.keys(qualityPillars).reduce((scores, pillar) => {
+    scores[pillar] = Object.entries(state.scores).reduce((sum, [category, score]) => {
+      return sum + (categoryPillars[category] === pillar ? Math.max(score, 0) : 0);
+    }, 0);
+    return scores;
+  }, {});
+}
+
+function topPillarKey() {
+  return Object.entries(pillarScores()).sort((a, b) => b[1] - a[1])[0][0];
+}
+
 function hypothesisStrength() {
   const score = confidence();
   if (score >= 70) {
@@ -715,13 +810,48 @@ function categoryAskedCount(category) {
   return state.asked.filter((item) => item.category === category).length;
 }
 
+function pillarAskedCount(pillar) {
+  return state.asked.filter((item) => categoryPillars[item.category] === pillar).length;
+}
+
 function recentlyAskedSameCategory(category) {
   const recent = state.asked.slice(-2);
   return recent.length >= 2 && recent.every((item) => item.category === category);
 }
 
+function findQuestionByPillar(pillar, askedIndexes) {
+  const rankedCategories = Object.entries(state.scores)
+    .filter(([category]) => categoryPillars[category] === pillar)
+    .sort((a, b) => b[1] - a[1])
+    .map(([category]) => category);
+
+  for (const category of rankedCategories) {
+    if (categoryAskedCount(category) >= 3 || recentlyAskedSameCategory(category)) continue;
+    const found = state.questions.findIndex(
+      (question, index) => !askedIndexes.has(index) && question.category === category,
+    );
+    if (found !== -1) return found;
+  }
+
+  return state.questions.findIndex((question, index) => {
+    return !askedIndexes.has(index) && questionPillar(question) === pillar;
+  });
+}
+
 function nextQuestionIndex() {
   const askedIndexes = new Set(state.asked.map((item) => item.index));
+  if (state.asked.length >= 1 && state.asked.length < 6) {
+    const rankedPillars = Object.entries(pillarScores())
+      .sort((a, b) => b[1] - a[1])
+      .map(([pillar]) => pillar);
+    const missingPillars = rankedPillars.filter((pillar) => pillarAskedCount(pillar) === 0);
+
+    for (const pillar of missingPillars) {
+      const found = findQuestionByPillar(pillar, askedIndexes);
+      if (found !== -1) return found;
+    }
+  }
+
   const rankedCategories = Object.entries(state.scores)
     .sort((a, b) => b[1] - a[1])
     .map(([category]) => category);
@@ -826,10 +956,11 @@ function buildEvidence(categoryKey) {
 }
 
 function resultIntro(diagnosis, secondary) {
+  const pillar = qualityPillars[topPillarKey()];
   if (state.area === "commercial") {
-    return `${diagnosis.summary} Tambem vale verificar: ${secondary.join(" e ")}. Para este caso comercial, o plano deve olhar para entrada de oportunidades, rotina de acompanhamento, clareza da oferta, canais e comportamento do cliente.`;
+    return `Pilar principal: ${pillar.label}. ${diagnosis.summary} Tambem vale verificar: ${secondary.join(" e ")}. Para este caso comercial, o plano deve olhar para entrada de oportunidades, rotina de acompanhamento, clareza da oferta, canais e comportamento do cliente.`;
   }
-  return `${diagnosis.summary} Tambem vale verificar: ${secondary.join(" e ")}. O plano deve priorizar evidencias observaveis, responsavel claro e acompanhamento ate confirmar a causa real.`;
+  return `Pilar principal: ${pillar.label}. ${diagnosis.summary} Tambem vale verificar: ${secondary.join(" e ")}. O plano deve priorizar evidencias observaveis, responsavel claro e acompanhamento ate confirmar a causa real.`;
 }
 
 function renderResult() {
@@ -867,6 +998,7 @@ function buildReport() {
   const evidence = buildEvidence(categoryKey).map((item) => `- ${item}`).join("\n");
   const plan = diagnosis.plan;
   const strength = hypothesisStrength();
+  const pillar = qualityPillars[topPillarKey()];
 
   return `O Investigador da Qualidade
 
@@ -877,6 +1009,7 @@ Publico afetado: ${audienceLabels[state.audience]}
 Problema: ${state.problem}
 
 Causa raiz provavel: ${diagnosis.title}
+Pilar principal: ${pillar.label}
 Grau da hipotese: ${strength.label}
 Observacao: ${strength.note}
 Pontos para verificar: ${secondary.join(", ")}

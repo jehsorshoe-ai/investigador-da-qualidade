@@ -6,6 +6,7 @@ Aplicativo mobile-first inspirado no Akinator, mas focado em descobrir a causa r
 
 - Coleta o perfil do usuário e o problema inicial.
 - Adapta a investigação por segmento, área e público afetado.
+- Cruza os três pilares centrais de qualidade: Pessoas, Produto e Processo.
 - Faz perguntas curtas com respostas simples.
 - Classifica hipóteses por causas adaptadas ao contexto.
 - Conduz perguntas objetivas para aprofundar a causa provável.
@@ -20,6 +21,12 @@ Aplicativo mobile-first inspirado no Akinator, mas focado em descobrir a causa r
 - Produto / serviço: falha, critérios, uso, fornecedor e percepção do cliente.
 - Pessoas: treinamento, liderança, carga e variação de execução.
 - Financeiro: medição, margem, preço, rotina e impacto.
+
+## Biblioteca de investigação
+
+- Pessoas: hard skills, soft skills, postura, comunicação, liderança, treinamento e disciplina de rotina.
+- Produto: desenvolvimento, matéria-prima, fornecedor, promessa, público-alvo e uso real.
+- Processo: padrão definido, processo real, controles, fluxo, desperdícios, estabilidade e rotina de gestão.
 
 ## Como rodar
 
