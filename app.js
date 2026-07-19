@@ -1,5 +1,17 @@
 const MAX_QUESTIONS = 14;
 const MIN_QUESTIONS = 7;
+const engineV2 =
+  typeof require === "function"
+    ? require("./engine-v2")
+    : typeof window !== "undefined"
+      ? window.CausaRealEngineV2
+      : null;
+const INVESTIGATION_ENGINE_V2 =
+  typeof process !== "undefined" && process.env
+    ? process.env.INVESTIGATION_ENGINE_V2 !== "false"
+    : typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("engine") !== "v1"
+      : true;
 
 const segmentLabels = {
   generic: "Geral",
@@ -68,6 +80,7 @@ const investigationLineLabels = {
   SERVICE_FAILURE: "Falha de atendimento",
   CUSTOMER_COMPLAINT: "Reclamacao de cliente",
   VALUE_PROPOSITION_MISMATCH: "Proposta de valor desalinhada",
+  HYPOTHESIS_SPACE_ENGINE: "Diagnostico causal industrial",
   FUNNEL_COMMERCIAL: "Funil comercial",
   COMMERCIAL_CONVERSION: "Conversao comercial",
   TECHNICAL_REWORK: "Retrabalho tecnico",
@@ -1265,6 +1278,8 @@ const state = {
   profile: "",
   problem: "",
   normalizedProblem: {},
+  engineVersion: "v1",
+  v2Session: null,
   classification: null,
   route: null,
   primaryInvestigationPath: null,
@@ -1641,6 +1656,52 @@ function currentQuestion() {
   return state.questions[state.index];
 }
 
+function shouldUseEngineV2() {
+  return Boolean(INVESTIGATION_ENGINE_V2 && engineV2?.beginInvestigation);
+}
+
+function syncV2State(session) {
+  const trace = engineV2.trace(session);
+  state.v2Session = session;
+  state.area = session.context?.area || "operations";
+  state.classification = {
+    fenomeno: session.phenomenon,
+    dominio: "producao_industrial",
+    subdominio: session.classification?.context || "industrial",
+    objeto_afetado: "processo_produtivo",
+    sintoma: session.phenomenon,
+    evento: session.macroPhenomenon,
+    impacto: "impacto_a_confirmar",
+    contexto: "industrial",
+    confianca_classificacao: session.classification?.confidence || 0,
+    possiveis_linhas: ["HYPOTHESIS_SPACE_ENGINE"],
+    route: "HYPOTHESIS_SPACE_ENGINE",
+    area: "operations",
+    reason: session.classification?.reason,
+  };
+  state.route = {
+    selectedLine: "HYPOTHESIS_SPACE_ENGINE",
+    area: "operations",
+    routeLocked: false,
+    gate: "hypothesis_space",
+    reason: session.classification?.reason,
+  };
+  state.primaryInvestigationPath = "HYPOTHESIS_SPACE_ENGINE";
+  state.allowedInvestigationPaths = ["HYPOTHESIS_SPACE_ENGINE"];
+  state.pathLock = false;
+  state.questions = session.currentQuestion ? [session.currentQuestion] : [];
+  state.index = 0;
+  state.activeHypotheses = trace.topHypotheses.map((hypothesis) => ({
+    id: hypothesis.id,
+    label: hypothesis.label,
+    score: hypothesis.weight,
+    supportingEvidence: [],
+    contradictingEvidence: [],
+  }));
+  state.hypothesisScores = Object.fromEntries(trace.topHypotheses.map((hypothesis) => [hypothesis.id, hypothesis.weight]));
+  state.debugEvents = session.debugEvents;
+}
+
 function beginInvestigation({ profile, segment, selectedArea, audience, problem }) {
   state.profile = profile || "";
   state.segment = segment || "generic";
@@ -1648,6 +1709,8 @@ function beginInvestigation({ profile, segment, selectedArea, audience, problem 
   state.audience = audience || "mixed";
   state.problem = (problem || "").trim();
   state.normalizedProblem = {};
+  state.engineVersion = "v1";
+  state.v2Session = null;
   state.classification = null;
   state.route = null;
   state.primaryInvestigationPath = null;
@@ -1669,6 +1732,26 @@ function beginInvestigation({ profile, segment, selectedArea, audience, problem 
   state.questions = [];
 
   resetScores();
+  if (shouldUseEngineV2()) {
+    const v2Session = engineV2.beginInvestigation({
+      profile: state.profile,
+      segment: state.segment,
+      selectedArea: state.selectedArea,
+      audience: state.audience,
+      problem: state.problem,
+    });
+    if (v2Session.supported) {
+      state.engineVersion = "v2";
+      syncV2State(v2Session);
+      state.normalizedProblem = {
+        originalProblem: state.problem,
+        normalizedText: stripAccents(state.problem),
+        classification: state.classification,
+      };
+      return currentQuestion();
+    }
+  }
+
   state.classification = classifyProblem(state.problem, state.selectedArea);
   state.route = routeInvestigation(state.classification);
   state.primaryInvestigationPath = state.route.selectedLine;
@@ -2012,6 +2095,22 @@ function questionContextPath() {
 
 function updateDebugPanel() {
   if (!isBrowser || !debugInvestigation || !debugPanel) return;
+  if (state.engineVersion === "v2" && state.v2Session) {
+    const trace = engineV2.trace(state.v2Session);
+    debugPanel.innerHTML = `
+      <strong>DEBUG INVESTIGATION V2</strong>
+      <span>PHENOMENON: ${trace.phenomenon}</span>
+      <span>QUESTION: ${trace.selectedQuestion?.id || "-"}</span>
+      <span>INFORMATION GAIN: ${trace.selectedQuestion?.informationGain || 0}</span>
+      <span>WHY: ${trace.selectedQuestion?.reason || "-"}</span>
+      <span>TOP HYPOTHESES: ${trace.topHypotheses
+        .slice(0, 4)
+        .map((item) => `${item.id} ${item.percent}%`)
+        .join(" | ")}</span>
+      <details><summary>Candidates</summary><pre>${JSON.stringify(trace.candidates, null, 2)}</pre></details>
+    `;
+    return;
+  }
   const question = currentQuestion();
   const trace = traceQuestionSelection();
   debugPanel.innerHTML = `
@@ -2077,8 +2176,13 @@ function renderQuestion() {
   const question = currentQuestion();
   stepLabel.textContent = `Pergunta ${state.asked.length + 1}`;
   questionText.textContent = question.text;
-  questionCategory.textContent = `Linha de investigacao: ${questionDisplayPath(question)}`;
-  contextLine.textContent = `${questionContextPath()} | ${segmentLabels[state.segment]} | ${audienceLabels[state.audience]}`;
+  if (state.engineVersion === "v2") {
+    questionCategory.textContent = "Investigacao probabilistica: producao industrial";
+    contextLine.textContent = `Engine V2 | ${segmentLabels[state.segment]} | ${audienceLabels[state.audience]}`;
+  } else {
+    questionCategory.textContent = `Linha de investigacao: ${questionDisplayPath(question)}`;
+    contextLine.textContent = `${questionContextPath()} | ${segmentLabels[state.segment]} | ${audienceLabels[state.audience]}`;
+  }
   progressBar.style.width = `${Math.min(100, (state.asked.length / MAX_QUESTIONS) * 100)}%`;
   renderAnswerControls(question);
   renderHistory();
@@ -2275,7 +2379,44 @@ function applyOptionAnswer(question, answer) {
   return option;
 }
 
+function recordAnswerV2(answer) {
+  const question = currentQuestion();
+  if (!question) {
+    return {
+      done: true,
+      question: null,
+      diagnosis: state.v2Session?.diagnosis || engineV2.buildDiagnosis(state.v2Session),
+    };
+  }
+  const option = question.options?.find((candidate) => candidate.value === answer);
+  const result = engineV2.answer(state.v2Session, answer);
+  syncV2State(result.session);
+  state.currentDepth += 1;
+  state.investigationPath.push(question.id);
+  state.asked.push({
+    index: 0,
+    questionId: question.id,
+    text: question.text,
+    answer,
+    answerLabel: option?.label || labelAnswer(answer),
+    category: question.category || "hypothesis",
+    evidence: result.session.answers.at(-1)?.evidence,
+    questionPurpose: "reducao_de_hipoteses",
+    targetHypothesis: result.transition?.topHypotheses?.[0]?.id,
+    reasonForQuestion: question.reasonForQuestion,
+    positive: answer === "yes" || Boolean(option),
+  });
+  state.debugEvents = result.session.debugEvents;
+  if (result.done) {
+    state.v2Session.diagnosis = result.diagnosis || engineV2.buildDiagnosis(result.session);
+    return { done: true, question, diagnosis: state.v2Session.diagnosis, transition: result.transition };
+  }
+  return { done: false, question, nextQuestion: result.nextQuestion, transition: result.transition };
+}
+
 function recordAnswer(answer) {
+  if (state.engineVersion === "v2") return recordAnswerV2(answer);
+
   const question = currentQuestion();
   const beforeHypothesisScores = hypothesisScoreSnapshot();
   const isChoiceQuestion = questionType(question) === questionTypes.multipleChoice;
@@ -2407,7 +2548,32 @@ function resultIntro(diagnosis, secondary) {
   return `Pilar principal: ${pillar.label}. ${diagnosis.summary} Tambem vale verificar: ${secondary.join(" e ")}. O plano deve priorizar evidencias observaveis, responsavel claro e acompanhamento ate confirmar a causa real.`;
 }
 
+function renderResultV2() {
+  const diagnosis = state.v2Session?.diagnosis || engineV2.buildDiagnosis(state.v2Session);
+  document.querySelector("#confidenceLabel").textContent = diagnosis.strengthLabel;
+  document.querySelector("#rootCauseTitle").textContent = diagnosis.title;
+  document.querySelector("#rootCauseText").textContent = diagnosis.summary;
+  document.querySelector("#evidenceList").innerHTML = diagnosis.evidence.map((item) => `<li>${item}</li>`).join("");
+  document.querySelector("#metricList").innerHTML = diagnosis.metrics.map((metric) => `<li>${metric}</li>`).join("");
+  document.querySelector("#actionPlan").innerHTML = [
+    ["O que", diagnosis.plan.what],
+    ["Por que", diagnosis.plan.why],
+    ["Onde", diagnosis.plan.where],
+    ["Quando", diagnosis.plan.when],
+    ["Quem", diagnosis.plan.who],
+    ["Como", diagnosis.plan.how],
+    ["Quanto", diagnosis.plan.howMuch],
+  ]
+    .map(([label, value]) => `<div class="action-row"><strong>${label}</strong><span>${value}</span></div>`)
+    .join("");
+}
+
 function renderResult() {
+  if (state.engineVersion === "v2") {
+    renderResultV2();
+    return;
+  }
+
   const categoryKey = topCategoryKey();
   const diagnosis = categories[categoryKey];
   const secondary = secondaryCategories(categoryKey);
@@ -2436,6 +2602,46 @@ function renderResult() {
 }
 
 function buildReport() {
+  if (state.engineVersion === "v2") {
+    const diagnosis = state.v2Session?.diagnosis || engineV2.buildDiagnosis(state.v2Session);
+    const trace = engineV2.trace(state.v2Session);
+    return `O Investigador da Qualidade
+
+Perfil: ${state.profile}
+Segmento: ${segmentLabels[state.segment]}
+Area: Producao industrial
+Publico afetado: ${audienceLabels[state.audience]}
+Problema: ${state.problem}
+
+Motor: Engine V2 - espaco de hipoteses
+Fenomeno: ${trace.phenomenon}
+
+Causa raiz provavel: ${diagnosis.title}
+Grau da hipotese: ${diagnosis.strengthLabel}
+
+Resumo:
+${diagnosis.summary}
+
+Evidencias:
+${diagnosis.evidence.map((item) => `- ${item}`).join("\n")}
+
+Hipoteses principais:
+${trace.topHypotheses.map((item) => `- ${item.label}: ${item.percent}%`).join("\n")}
+
+Plano 5W2H:
+O que: ${diagnosis.plan.what}
+Por que: ${diagnosis.plan.why}
+Onde: ${diagnosis.plan.where}
+Quando: ${diagnosis.plan.when}
+Quem: ${diagnosis.plan.who}
+Como: ${diagnosis.plan.how}
+Quanto: ${diagnosis.plan.howMuch}
+
+Indicadores:
+${diagnosis.metrics.map((metric) => `- ${metric}`).join("\n")}
+`;
+  }
+
   const categoryKey = topCategoryKey();
   const diagnosis = categories[categoryKey];
   const secondary = secondaryCategories(categoryKey);
@@ -2479,6 +2685,25 @@ ${diagnosis.metrics.map((metric) => `- ${metric}`).join("\n")}
 }
 
 function getDebugRoute() {
+  if (state.engineVersion === "v2" && state.v2Session) {
+    const trace = engineV2.trace(state.v2Session);
+    return {
+      engineVersion: "v2",
+      classification: state.classification,
+      selectedRoute: state.route?.selectedLine,
+      routeGate: state.route?.gate,
+      confidence: state.classification?.confianca_classificacao,
+      reason: state.route?.reason,
+      activeHypotheses: trace.topHypotheses,
+      confirmedFacts: state.v2Session.answers.map((answer) => answer.answerLabel),
+      confirmedFactDetails: {},
+      hypothesisScores: Object.fromEntries(trace.topHypotheses.map((item) => [item.id, item.weight])),
+      investigationPath: state.investigationPath,
+      transitions: state.v2Session.debugEvents.filter((event) => event.type === "probability_update"),
+      trace,
+    };
+  }
+
   return {
     classification: state.classification,
     selectedRoute: state.route?.selectedLine,
@@ -2498,6 +2723,8 @@ function resetApp() {
   state.profile = "";
   state.problem = "";
   state.normalizedProblem = {};
+  state.engineVersion = "v1";
+  state.v2Session = null;
   state.classification = null;
   state.route = null;
   state.primaryInvestigationPath = null;
@@ -2587,6 +2814,8 @@ if (typeof module !== "undefined") {
     topCategoryKey,
     buildReport,
     getDebugRoute,
+    engineV2,
+    INVESTIGATION_ENGINE_V2,
     traceQuestionSelection,
     evaluateQuestionCandidates,
     isQuestionEligible,

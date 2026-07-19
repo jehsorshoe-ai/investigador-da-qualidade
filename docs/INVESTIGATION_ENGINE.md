@@ -14,6 +14,55 @@ INPUT
 -> CONCLUSAO
 ```
 
+## Engine V2: Hypothesis Space Engine
+
+O Engine V2 muda o paradigma para reducao progressiva de hipoteses. Ele nao escolhe uma arvore fixa no inicio. Primeiro identifica o macrofenomeno, cria um espaco de hipoteses simultaneas e escolhe a proxima pergunta pelo maior ganho de informacao.
+
+Estrutura inicial:
+
+```text
+engine-v2/
+  phenomenonClassifier.js
+  hypothesisEngine.js
+  questionSelector.js
+  informationGain.js
+  evidenceEngine.js
+  contradictionEngine.js
+  stoppingRules.js
+  knowledgeBase/
+```
+
+O MVP cobre `PRODUCTION_FAILURE`. Para outros dominios, o V1 continua ativo.
+
+Feature flag:
+
+```text
+INVESTIGATION_ENGINE_V2=false
+```
+
+No navegador, `?engine=v1` forca o fluxo antigo para comparacao.
+
+Fluxo do V2:
+
+```text
+INPUT
+-> PHENOMENON CLASSIFIER
+-> INITIAL HYPOTHESIS SPACE
+-> INFORMATION GAIN QUESTION SELECTOR
+-> BAYESIAN-LIKE UPDATE
+-> EVIDENCE / CONTRADICTIONS
+-> DRILL-DOWN
+-> ACTIONABLE DIAGNOSIS
+```
+
+Para `Falhas na producao.`, a primeira pergunta deve ser industrial:
+
+```text
+Qual e o principal efeito observado na producao?
+```
+
+Ela nunca deve mostrar atendimento, cobranca, falta de retorno, venda ou negociacao.
+
 ## Causa tecnica corrigida
 
 Antes da refatoracao, o fluxo era:
@@ -309,6 +358,7 @@ Rodar:
 ```bash
 node --check app.js
 node tests/engine.test.js
+node tests/engine-v2-production.test.js
 node tests/service-failure-technical-gap.test.js
 node tests/audit-question-eligibility.js
 node tests/service-debug.js
@@ -325,3 +375,5 @@ Regressoes obrigatorias:
 - `A nota fiscal saiu com dados incorretos.` deve cair em processo documental.
 - A sequencia de atendimento com dificuldade tecnica confirmada nao pode saltar para promessa, proposta, preco, funil, conversao ou venda.
 - Perguntas de promessa/proposta de valor so podem ser elegiveis quando existem fatos de promessa ou expectativa.
+- `Falhas na producao.` deve usar Engine V2 e abrir enquadramento industrial, sem atendimento, retorno, cobranca, venda ou negociacao.
+- Engine V2 deve registrar evolucao de probabilidades e selecionar perguntas por ganho de informacao.
