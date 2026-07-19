@@ -279,13 +279,13 @@ const questionBank = [
     evidence: "O problema pode envolver habilidade tecnica insuficiente.",
   },
   {
-    text: "A comunicação com o cliente parece influenciar o problema?",
+    text: "O cliente recebe informacoes claras durante o atendimento?",
     category: "people",
     areas: ["service", "commercial", "product", "people"],
     evidence: "O problema pode envolver comunicacao, postura ou habilidade comportamental.",
   },
   {
-    text: "As pessoas sabem exatamente qual comportamento e esperado nessa situacao?",
+    text: "A equipe sabe como deve agir nessa situacao?",
     category: "people",
     areas: ["service", "commercial", "operations", "product", "people"],
     reverse: true,
@@ -298,13 +298,13 @@ const questionBank = [
     evidence: "Pode haver diferenca entre a expectativa criada e a experiencia entregue.",
   },
   {
-    text: "O problema apareceu depois de uma mudanca na oferta?",
-    category: "input",
+    text: "A promessa feita ao cliente mudou antes do problema comecar?",
+    category: "offer",
     areas: ["operations", "product", "service", "commercial"],
-    evidence: "Mudanca no produto ou servico pode ter iniciado o problema.",
+    evidence: "Mudanca na promessa, pacote ou condicao vendida pode ter iniciado o problema.",
   },
   {
-    text: "O problema apareceu depois de uma mudanca na entrada fornecida?",
+    text: "O problema comecou depois que mudaram as informacoes, materiais e pedidos recebidos?",
     category: "input",
     areas: ["operations", "product"],
     evidence: "Mudanca em fornecedor ou insumo pode ter iniciado o problema.",
@@ -379,7 +379,7 @@ const questionBank = [
     evidence: "A variação pode estar relacionada a turno, horário ou escala.",
   },
   {
-    text: "A queda aparece mais em uma etapa especifica do funil de vendas?",
+    text: "A queda acontece mais em alguma fase da venda?",
     category: "funnel",
     areas: ["commercial"],
     evidence: "A perda parece concentrada em uma etapa do funil.",
@@ -391,7 +391,7 @@ const questionBank = [
     evidence: "A demanda ou volume de oportunidades pode ter caido.",
   },
   {
-    text: "Os leads atuais parecem menos qualificados que antes?",
+    text: "As pessoas que chegam hoje tem menos chance de comprar do que antes?",
     category: "input",
     areas: ["commercial"],
     evidence: "A entrada comercial pode estar chegando com baixa qualidade.",
@@ -416,14 +416,14 @@ const questionBank = [
     evidence: "Tempo de resposta pode estar afetando conversao ou experiencia.",
   },
   {
-    text: "Existe uma rotina clara de follow-up para oportunidades abertas?",
+    text: "Existe uma rotina clara para voltar a falar com clientes interessados?",
     category: "method",
     areas: ["commercial"],
     reverse: true,
     evidence: "A rotina de follow-up pode estar pouco padronizada.",
   },
   {
-    text: "A proposta comercial mostra claramente o valor antes do preco?",
+    text: "O cliente entende o beneficio antes de comparar o preco?",
     category: "offer",
     areas: ["commercial"],
     reverse: true,
@@ -449,7 +449,7 @@ const questionBank = [
     evidence: "Pode faltar dominio sobre diferenciais e argumentos.",
   },
   {
-    text: "O controle atual mostra as proximas acoes de cada oportunidade?",
+    text: "O sistema atual mostra o proximo passo de cada cliente interessado?",
     category: "tools",
     areas: ["commercial"],
     reverse: true,
@@ -481,7 +481,7 @@ const questionBank = [
     evidence: "Pode haver desalinhamento entre promessa e entrega.",
   },
   {
-    text: "O problema aparece mais em uma etapa especifica da operacao?",
+    text: "O problema acontece mais em uma parte especifica do trabalho?",
     category: "method",
     areas: ["operations", "product", "service", "finance", "people"],
     evidence: "A falha se concentra em uma etapa da rotina.",
@@ -493,7 +493,7 @@ const questionBank = [
     evidence: "Ha variacao na forma de executar a rotina.",
   },
   {
-    text: "Existe criterio claro para dizer que a atividade foi bem feita?",
+    text: "Esta claro como saber se a atividade foi feita corretamente?",
     category: "measurement",
     areas: ["operations", "product", "service", "people", "finance"],
     reverse: true,
@@ -513,7 +513,7 @@ const questionBank = [
     evidence: "O problema aumenta com troca ou entrada de pessoas.",
   },
   {
-    text: "Existe indicador acompanhando esse problema toda semana?",
+    text: "Existe algum numero acompanhado toda semana para medir esse problema?",
     category: "measurement",
     areas: ["operations", "product", "service", "finance", "people", "commercial"],
     reverse: true,
@@ -527,13 +527,13 @@ const questionBank = [
     evidence: "A origem temporal do problema ainda e pouco visivel.",
   },
   {
-    text: "O problema aparece depois de receber uma entrada incompleta?",
+    text: "O problema acontece quando chegam informacoes incompletas?",
     category: "input",
     areas: ["operations", "product", "service", "finance"],
     evidence: "A falha pode vir de uma entrada externa.",
   },
   {
-    text: "O problema se concentra em uma origem especifica?",
+    text: "Existe um lugar de origem onde o problema aparece mais?",
     category: "input",
     areas: ["operations", "product", "service", "commercial"],
     evidence: "Existe concentracao em fornecedor, canal ou tipo de entrada.",
@@ -551,7 +551,7 @@ const questionBank = [
     evidence: "A execucao correta depende de improviso ou recurso insuficiente.",
   },
   {
-    text: "As reclamacoes se repetem mesmo quando a entrega segue o padrao interno?",
+    text: "Mesmo fazendo do jeito combinado pela empresa, o cliente continua reclamando?",
     category: "customer",
     areas: ["service", "operations", "product"],
     evidence: "A expectativa externa pode estar diferente do padrao interno.",
@@ -573,72 +573,166 @@ const questionBank = [
 const segmentQuestionBoost = {
   retail: {
     commercial: [
-      "O desempenho muda conforme a loja?",
-      "O cliente compara preco com facilidade antes de decidir?",
+      {
+        text: "O desempenho muda conforme a loja?",
+        category: "market",
+        evidence: "A perda pode estar concentrada por loja, ponto ou regiao.",
+      },
+      {
+        text: "O cliente compara preco com facilidade antes de decidir?",
+        category: "offer",
+        evidence: "O valor percebido pode estar fragil quando a decisao vira comparacao de preco.",
+      },
     ],
     service: [
-      "A reclamação se concentra em um canal de atendimento específico?",
-      "O cliente recebe a mesma orientação independentemente de quem atende?",
+      {
+        text: "A reclamacao se concentra em um canal de atendimento especifico?",
+        category: "measurement",
+        evidence: "A reclamacao pode estar concentrada em um canal especifico.",
+      },
+      {
+        text: "O cliente recebe orientacoes diferentes dependendo de quem atende?",
+        category: "method",
+        evidence: "A orientacao ao cliente pode variar entre atendentes.",
+      },
     ],
   },
   services: {
     commercial: [
-      "A percepcao de valor depende muito da explicacao feita antes da venda?",
-      "A entrega real varia conforme o profissional?",
+      {
+        text: "O cliente entende claramente por que vale a pena comprar?",
+        category: "offer",
+        reverse: true,
+        evidence: "A percepcao de valor pode nao estar clara antes da decisao.",
+      },
+      {
+        text: "A entrega real varia conforme o profissional?",
+        category: "people",
+        evidence: "A experiencia pode depender demais de quem executa o servico.",
+      },
     ],
     service: [
-      "A reclamação aparece antes da execução do serviço?",
-      "A expectativa combinada com o cliente fica registrada antes do atendimento?",
+      {
+        text: "A reclamacao aparece antes de o servico ser realizado?",
+        category: "customer",
+        evidence: "A expectativa pode estar desalinhada antes da execucao.",
+      },
+      {
+        text: "A expectativa combinada com o cliente fica registrada antes do atendimento?",
+        category: "method",
+        reverse: true,
+        evidence: "A expectativa combinada pode nao estar registrada de forma verificavel.",
+      },
     ],
   },
   industry: {
     operations: [
-      "A variacao aparece mais em alguns lotes?",
-      "Existe controle de qualidade antes da proxima etapa receber o item?",
+      {
+        text: "A variacao aparece mais em alguns lotes?",
+        category: "input",
+        evidence: "A variacao pode estar ligada a lote, material ou entrada do processo.",
+      },
+      {
+        text: "Alguem confere a qualidade antes de passar para a proxima etapa?",
+        category: "measurement",
+        reverse: true,
+        evidence: "Pode faltar verificacao antes da proxima etapa receber o problema.",
+      },
     ],
   },
   restaurant: {
     service: [
-      "A reclamação acontece mais no delivery?",
-      "O problema aumenta em horário de pico?",
+      {
+        text: "A reclamacao acontece mais no delivery?",
+        category: "customer",
+        evidence: "A experiencia no delivery pode concentrar a reclamacao.",
+      },
+      {
+        text: "O problema aumenta em horario de pico?",
+        category: "method",
+        evidence: "A rotina pode perder estabilidade em horario de pico.",
+      },
     ],
     operations: [
-      "O problema aumenta em horario de pico?",
-      "A experiencia percebida pelo cliente piora no delivery?",
+      {
+        text: "O problema aumenta em horario de pico?",
+        category: "method",
+        evidence: "A rotina pode perder estabilidade em horario de pico.",
+      },
+      {
+        text: "A experiencia percebida pelo cliente piora no delivery?",
+        category: "customer",
+        evidence: "O delivery pode estar entregando uma experiencia abaixo da expectativa.",
+      },
     ],
   },
   ecommerce: {
     commercial: [
-      "A perda aparece mais antes do checkout?",
-      "O cliente recebe informacoes suficientes antes de comprar online?",
+      {
+        text: "A perda aparece mais antes de finalizar a compra?",
+        category: "funnel",
+        evidence: "A perda pode estar concentrada antes da finalizacao da compra.",
+      },
+      {
+        text: "O cliente recebe informacoes suficientes antes de comprar online?",
+        category: "offer",
+        reverse: true,
+        evidence: "Pode faltar informacao para o cliente decidir com seguranca.",
+      },
     ],
     service: [
-      "A reclamação acontece mais depois da entrega?",
-      "O cliente consegue acompanhar o status do pedido sem chamar o atendimento?",
+      {
+        text: "A reclamacao acontece mais depois da entrega?",
+        category: "customer",
+        evidence: "A expectativa pode quebrar depois que o cliente recebe o pedido.",
+      },
+      {
+        text: "O cliente consegue acompanhar o status do pedido sem chamar o atendimento?",
+        category: "tools",
+        reverse: true,
+        evidence: "Pode faltar visibilidade do status do pedido para o cliente.",
+      },
     ],
   },
   health: {
     service: [
-      "O problema envolve tempo de espera?",
-      "Existe padrão claro para registrar e acompanhar cada atendimento?",
+      {
+        text: "O problema envolve tempo de espera?",
+        category: "method",
+        evidence: "Tempo de espera pode ser parte relevante da experiencia percebida.",
+      },
+      {
+        text: "Existe padrao claro para registrar e acompanhar cada atendimento?",
+        category: "method",
+        reverse: true,
+        evidence: "Pode faltar padrao para registrar e acompanhar o atendimento.",
+      },
     ],
   },
   education: {
     service: [
-      "O problema se concentra em um grupo específico?",
-      "O responsável entende claramente a evolução esperada?",
+      {
+        text: "Acontece mais em uma turma especifica?",
+        category: "measurement",
+        evidence: "O problema pode estar concentrado em uma turma ou grupo.",
+      },
+      {
+        text: "Responsaveis sabem qual evolucao devem esperar?",
+        category: "customer",
+        reverse: true,
+        evidence: "A expectativa dos responsaveis pode nao estar clara.",
+      },
     ],
   },
 };
 
 function makeSegmentQuestions(segment, area) {
   const segmentQuestions = segmentQuestionBoost[segment] || {};
-  const texts = segmentQuestions[area] || segmentQuestions.operations || segmentQuestions.service || [];
-  return texts.map((text, index) => ({
-    text,
-    category: index % 2 === 0 ? (area === "commercial" ? "market" : "customer") : "method",
+  const questions = segmentQuestions[area] || segmentQuestions.operations || segmentQuestions.service || [];
+  return questions.map((question) => ({
+    ...question,
     areas: [area],
-    evidence: `O segmento ${segmentLabels[segment]} pode influenciar o padrao do problema.`,
+    evidence: question.evidence || `O segmento ${segmentLabels[segment]} pode influenciar o padrao do problema.`,
     segmentOnly: true,
   }));
 }
@@ -656,20 +750,21 @@ const state = {
   questions: [],
 };
 
-const screens = document.querySelectorAll(".screen");
-const startForm = document.querySelector("#startForm");
-const profileInput = document.querySelector("#profile");
-const segmentInput = document.querySelector("#segment");
-const areaInput = document.querySelector("#area");
-const audienceInput = document.querySelector("#audience");
-const problemInput = document.querySelector("#problem");
-const stepLabel = document.querySelector("#stepLabel");
-const progressBar = document.querySelector("#progressBar");
-const questionText = document.querySelector("#questionText");
-const questionCategory = document.querySelector("#questionCategory");
-const contextLine = document.querySelector("#contextLine");
-const historyList = document.querySelector("#historyList");
-const answerButtons = document.querySelectorAll("[data-answer]");
+const isBrowser = typeof document !== "undefined";
+const screens = isBrowser ? document.querySelectorAll(".screen") : [];
+const startForm = isBrowser ? document.querySelector("#startForm") : null;
+const profileInput = isBrowser ? document.querySelector("#profile") : null;
+const segmentInput = isBrowser ? document.querySelector("#segment") : null;
+const areaInput = isBrowser ? document.querySelector("#area") : null;
+const audienceInput = isBrowser ? document.querySelector("#audience") : null;
+const problemInput = isBrowser ? document.querySelector("#problem") : null;
+const stepLabel = isBrowser ? document.querySelector("#stepLabel") : null;
+const progressBar = isBrowser ? document.querySelector("#progressBar") : null;
+const questionText = isBrowser ? document.querySelector("#questionText") : null;
+const questionCategory = isBrowser ? document.querySelector("#questionCategory") : null;
+const contextLine = isBrowser ? document.querySelector("#contextLine") : null;
+const historyList = isBrowser ? document.querySelector("#historyList") : null;
+const answerButtons = isBrowser ? document.querySelectorAll("[data-answer]") : [];
 
 function stripAccents(value) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -678,7 +773,7 @@ function stripAccents(value) {
 function detectArea(problem, selectedArea) {
   const text = stripAccents(problem);
   const isServiceComplaint = /\b(reclama|reclamacao|atendimento|atendente|suporte|experiencia|insatisfacao)\b/.test(text);
-  if (isServiceComplaint && (selectedArea === "auto" || selectedArea === "commercial")) {
+  if (isServiceComplaint && selectedArea === "auto") {
     return "service";
   }
   if (selectedArea !== "auto") return selectedArea;
@@ -764,14 +859,39 @@ function currentQuestion() {
   return state.questions[state.index];
 }
 
+function beginInvestigation({ profile, segment, selectedArea, audience, problem }) {
+  state.profile = profile || "";
+  state.segment = segment || "generic";
+  state.selectedArea = selectedArea || "auto";
+  state.audience = audience || "mixed";
+  state.problem = (problem || "").trim();
+  state.index = 0;
+  state.asked = [];
+  state.questions = [];
+
+  resetScores();
+  state.area = detectArea(state.problem, state.selectedArea);
+  state.questions = buildQuestionSet();
+  seedScores();
+  state.index = nextQuestionIndex();
+  if (state.index === -1) state.index = 0;
+  return currentQuestion();
+}
+
 function answerWeight(answer, reverse) {
-  const base = {
+  const regular = {
     yes: 3,
     partial: 1.5,
     no: -1,
     unknown: 0,
-  }[answer];
-  return reverse ? -base : base;
+  };
+  const reversed = {
+    yes: -1,
+    partial: 1.5,
+    no: 3,
+    unknown: 0,
+  };
+  return (reverse ? reversed : regular)[answer];
 }
 
 function labelAnswer(answer) {
@@ -940,7 +1060,7 @@ function applyRelatedScore(question, answer, primaryWeight) {
   });
 }
 
-function handleAnswer(answer) {
+function recordAnswer(answer) {
   const question = currentQuestion();
   const primaryWeight = answerWeight(answer, question.reverse);
   state.scores[question.category] += primaryWeight;
@@ -956,13 +1076,22 @@ function handleAnswer(answer) {
   });
 
   if (shouldFinish()) {
+    return { done: true, question };
+  }
+
+  const nextIndex = nextQuestionIndex();
+  state.index = nextIndex === -1 ? 0 : nextIndex;
+  return { done: false, question, nextQuestion: currentQuestion() };
+}
+
+function handleAnswer(answer) {
+  const result = recordAnswer(answer);
+  if (result.done) {
     renderResult();
     showScreen("result");
     return;
   }
 
-  const nextIndex = nextQuestionIndex();
-  state.index = nextIndex === -1 ? 0 : nextIndex;
   renderQuestion();
 }
 
@@ -980,12 +1109,14 @@ function secondaryCategories(primary) {
 
 function buildEvidence(categoryKey) {
   const positives = state.asked.filter((item) => item.category === categoryKey && item.positive);
-  const fallback = state.asked.filter((item) => item.positive);
-  return (positives.length ? positives : fallback).slice(0, 5).map((item) => item.evidence);
+  if (!positives.length) {
+    return ["Ainda nao houve evidencia direta suficiente para esta linha; trate como hipotese inicial e valide com dados reais."];
+  }
+  return positives.slice(0, 5).map((item) => item.evidence);
 }
 
 function resultIntro(diagnosis, secondary) {
-  const pillar = qualityPillars[topPillarKey()];
+  const pillar = qualityPillars[categoryPillars[topCategoryKey()]];
   if (state.area === "commercial") {
     return `Pilar principal: ${pillar.label}. ${diagnosis.summary} Tambem vale verificar: ${secondary.join(" e ")}. Para este caso comercial, o plano deve olhar para entrada de oportunidades, rotina de acompanhamento, clareza da oferta, canais e comportamento do cliente.`;
   }
@@ -1027,7 +1158,7 @@ function buildReport() {
   const evidence = buildEvidence(categoryKey).map((item) => `- ${item}`).join("\n");
   const plan = diagnosis.plan;
   const strength = hypothesisStrength();
-  const pillar = qualityPillars[topPillarKey()];
+  const pillar = qualityPillars[categoryPillars[categoryKey]];
 
   return `O Investigador da Qualidade
 
@@ -1078,46 +1209,64 @@ function resetApp() {
   showScreen("home");
 }
 
-startForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  state.profile = profileInput.value;
-  state.segment = segmentInput.value;
-  state.selectedArea = areaInput.value;
-  state.audience = audienceInput.value;
-  state.problem = problemInput.value.trim();
-  if (!state.problem) return;
+function initBrowserApp() {
+  startForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const problem = problemInput.value.trim();
+    if (!problem) return;
 
-  resetScores();
-  state.area = detectArea(state.problem, state.selectedArea);
-  state.questions = buildQuestionSet();
-  seedScores();
-  state.index = nextQuestionIndex();
-  if (state.index === -1) state.index = 0;
-  renderQuestion();
-  showScreen("investigation");
-});
+    beginInvestigation({
+      profile: profileInput.value,
+      segment: segmentInput.value,
+      selectedArea: areaInput.value,
+      audience: audienceInput.value,
+      problem,
+    });
+    renderQuestion();
+    showScreen("investigation");
+  });
 
-answerButtons.forEach((button) => {
-  button.addEventListener("click", () => handleAnswer(button.dataset.answer));
-});
+  answerButtons.forEach((button) => {
+    button.addEventListener("click", () => handleAnswer(button.dataset.answer));
+  });
 
-document.querySelector("#backHome").addEventListener("click", resetApp);
-document.querySelector("#restart").addEventListener("click", resetApp);
-document.querySelector("#restartTop").addEventListener("click", resetApp);
+  document.querySelector("#backHome").addEventListener("click", resetApp);
+  document.querySelector("#restart").addEventListener("click", resetApp);
+  document.querySelector("#restartTop").addEventListener("click", resetApp);
 
-document.querySelector("#copyReport").addEventListener("click", async () => {
-  await navigator.clipboard.writeText(buildReport());
-  document.querySelector("#copyReport").textContent = "Diagnostico copiado";
-});
+  document.querySelector("#copyReport").addEventListener("click", async () => {
+    await navigator.clipboard.writeText(buildReport());
+    document.querySelector("#copyReport").textContent = "Diagnostico copiado";
+  });
 
-document.querySelector("#downloadReport").addEventListener("click", () => {
-  const blob = new Blob([buildReport()], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "diagnostico-qualidade.txt";
-  link.click();
-  URL.revokeObjectURL(url);
-});
+  document.querySelector("#downloadReport").addEventListener("click", () => {
+    const blob = new Blob([buildReport()], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "diagnostico-qualidade.txt";
+    link.click();
+    URL.revokeObjectURL(url);
+  });
+}
 
 resetScores();
+if (isBrowser) initBrowserApp();
+
+if (typeof module !== "undefined") {
+  module.exports = {
+    state,
+    questionBank,
+    segmentQuestionBoost,
+    makeSegmentQuestions,
+    detectArea,
+    beginInvestigation,
+    recordAnswer,
+    answerWeight,
+    categoryPillars,
+    qualityPillars,
+    categories,
+    topCategoryKey,
+    buildReport,
+  };
+}
