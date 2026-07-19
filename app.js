@@ -292,11 +292,10 @@ const questionBank = [
     evidence: "Pode faltar clareza sobre o comportamento esperado.",
   },
   {
-    text: "A oferta combina com o publico que esta reclamando?",
+    text: "O cliente esperava algo diferente do que recebeu?",
     category: "customer",
     areas: ["service", "commercial", "product"],
-    reverse: true,
-    evidence: "Pode haver desalinhamento entre produto, servico e publico real.",
+    evidence: "Pode haver diferenca entre a expectativa criada e a experiencia entregue.",
   },
   {
     text: "O problema apareceu depois de uma mudanca na oferta?",
