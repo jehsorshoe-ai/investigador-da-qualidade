@@ -30,27 +30,71 @@ const audienceLabels = {
 };
 
 const areaKeywords = {
-  commercial: [
-    "venda",
-    "vendas",
-    "comercial",
-    "cliente",
-    "clientes",
-    "lead",
-    "leads",
-    "orcamento",
-    "proposta",
-    "conversao",
-    "faturamento",
-    "receita",
-    "meta",
-    "ticket",
-  ],
-  service: ["atendimento", "reclamacao", "nps", "satisfacao", "suporte", "pos-venda", "espera"],
-  operations: ["entrega", "atraso", "producao", "estoque", "pedido", "logistica", "prazo", "retrabalho"],
-  people: ["equipe", "lideranca", "turnover", "treinamento", "desempenho", "motivacao", "absenteismo"],
-  product: ["produto", "defeito", "qualidade", "garantia", "servico", "falha", "devolucao"],
-  finance: ["custo", "margem", "inadimplencia", "preco", "caixa", "lucro", "despesa"],
+  commercial: {
+    venda: 3,
+    vendas: 3,
+    comercial: 3,
+    lead: 2,
+    leads: 2,
+    orcamento: 2,
+    proposta: 2,
+    conversao: 2,
+    faturamento: 2,
+    receita: 2,
+    meta: 2,
+    ticket: 1,
+  },
+  service: {
+    atendimento: 4,
+    atende: 3,
+    atendente: 3,
+    reclamacao: 4,
+    reclama: 4,
+    insatisfacao: 3,
+    satisfacao: 2,
+    experiencia: 3,
+    suporte: 3,
+    "pos-venda": 2,
+    espera: 2,
+    demora: 2,
+  },
+  operations: {
+    entrega: 3,
+    atraso: 3,
+    producao: 2,
+    estoque: 2,
+    pedido: 2,
+    logistica: 2,
+    prazo: 2,
+    retrabalho: 2,
+  },
+  people: {
+    equipe: 2,
+    lideranca: 2,
+    turnover: 2,
+    treinamento: 2,
+    desempenho: 2,
+    motivacao: 2,
+    absenteismo: 2,
+  },
+  product: {
+    produto: 2,
+    defeito: 3,
+    qualidade: 2,
+    garantia: 2,
+    servico: 1,
+    falha: 2,
+    devolucao: 2,
+  },
+  finance: {
+    custo: 2,
+    margem: 2,
+    inadimplencia: 2,
+    preco: 2,
+    caixa: 2,
+    lucro: 2,
+    despesa: 2,
+  },
 };
 
 const categories = {
@@ -201,6 +245,38 @@ const categories = {
 };
 
 const questionBank = [
+  {
+    text: "A reclamação acontece mais em um canal específico de atendimento?",
+    category: "customer",
+    areas: ["service"],
+    evidence: "A reclamação pode estar concentrada em um canal de atendimento.",
+  },
+  {
+    text: "O cliente reclama mais do tempo de resposta ou da forma como foi tratado?",
+    category: "customer",
+    areas: ["service"],
+    evidence: "A reclamação pode estar ligada a tempo de resposta ou postura no contato.",
+  },
+  {
+    text: "Existe um padrão claro de como a equipe deve conduzir esse atendimento?",
+    category: "method",
+    areas: ["service"],
+    reverse: true,
+    evidence: "O padrão de atendimento pode não estar claro para a equipe.",
+  },
+  {
+    text: "A equipe registra o motivo real de cada reclamação de atendimento?",
+    category: "measurement",
+    areas: ["service"],
+    reverse: true,
+    evidence: "Os motivos das reclamações podem não estar classificados de forma útil.",
+  },
+  {
+    text: "As reclamações se concentram em algumas pessoas ou turnos?",
+    category: "people",
+    areas: ["service"],
+    evidence: "A variação pode estar relacionada a pessoa, turno ou escala.",
+  },
   {
     text: "A queda aparece mais em uma etapa especifica do funil de vendas?",
     category: "funnel",
@@ -394,19 +470,72 @@ const questionBank = [
 ];
 
 const segmentQuestionBoost = {
-  retail: ["O desempenho muda conforme loja, vendedor, horario ou vitrine?", "O cliente compara preco com facilidade antes de decidir?"],
-  services: ["A percepcao de valor depende muito da explicacao feita antes da venda?", "A entrega real varia conforme agenda ou profissional?"],
-  industry: ["A variacao aparece mais por lote, turno, maquina ou materia-prima?", "Existe controle de qualidade antes da proxima etapa receber o item?"],
-  restaurant: ["O problema muda conforme horario de pico, equipe ou canal de pedido?", "A experiencia percebida pelo cliente muda entre salao, retirada e delivery?"],
-  ecommerce: ["A perda aparece mais em trafego, carrinho, checkout ou pos-compra?", "O cliente recebe informacoes suficientes antes de comprar online?"],
-  health: ["O problema envolve expectativa, espera, agenda ou orientacao ao paciente?", "Existe padrao claro para registrar e acompanhar cada atendimento?"],
-  education: ["O problema muda conforme turma, professor, canal ou perfil do aluno?", "O aluno ou responsavel entende claramente a evolucao esperada?"],
+  retail: {
+    commercial: [
+      "O desempenho muda conforme loja, vendedor, horario ou vitrine?",
+      "O cliente compara preco com facilidade antes de decidir?",
+    ],
+    service: [
+      "A reclamação se concentra em uma loja, horário, canal ou atendente específico?",
+      "O cliente recebe a mesma orientação independentemente de quem atende?",
+    ],
+  },
+  services: {
+    commercial: [
+      "A percepcao de valor depende muito da explicacao feita antes da venda?",
+      "A entrega real varia conforme agenda ou profissional?",
+    ],
+    service: [
+      "A reclamação aparece mais antes, durante ou depois da execução do serviço?",
+      "A expectativa combinada com o cliente fica registrada antes do atendimento?",
+    ],
+  },
+  industry: {
+    operations: [
+      "A variacao aparece mais por lote, turno, maquina ou materia-prima?",
+      "Existe controle de qualidade antes da proxima etapa receber o item?",
+    ],
+  },
+  restaurant: {
+    service: [
+      "A reclamação muda entre salão, retirada e delivery?",
+      "O problema aumenta em horário de pico?",
+    ],
+    operations: [
+      "O problema muda conforme horario de pico, equipe ou canal de pedido?",
+      "A experiencia percebida pelo cliente muda entre salao, retirada e delivery?",
+    ],
+  },
+  ecommerce: {
+    commercial: [
+      "A perda aparece mais em trafego, carrinho, checkout ou pos-compra?",
+      "O cliente recebe informacoes suficientes antes de comprar online?",
+    ],
+    service: [
+      "A reclamação acontece mais antes ou depois da entrega?",
+      "O cliente consegue acompanhar o status do pedido sem chamar o atendimento?",
+    ],
+  },
+  health: {
+    service: [
+      "O problema envolve expectativa, espera, agenda ou orientação ao paciente?",
+      "Existe padrão claro para registrar e acompanhar cada atendimento?",
+    ],
+  },
+  education: {
+    service: [
+      "O problema muda conforme turma, professor, canal ou perfil do aluno?",
+      "O aluno ou responsável entende claramente a evolução esperada?",
+    ],
+  },
 };
 
 function makeSegmentQuestions(segment, area) {
-  return (segmentQuestionBoost[segment] || []).map((text, index) => ({
+  const segmentQuestions = segmentQuestionBoost[segment] || {};
+  const texts = segmentQuestions[area] || segmentQuestions.operations || segmentQuestions.service || [];
+  return texts.map((text, index) => ({
     text,
-    category: index % 2 === 0 ? (area === "commercial" ? "market" : "method") : "customer",
+    category: index % 2 === 0 ? (area === "commercial" ? "market" : "customer") : "method",
     areas: [area],
     evidence: `O segmento ${segmentLabels[segment]} pode influenciar o padrao do problema.`,
     segmentOnly: true,
@@ -446,12 +575,18 @@ function stripAccents(value) {
 }
 
 function detectArea(problem, selectedArea) {
-  if (selectedArea !== "auto") return selectedArea;
   const text = stripAccents(problem);
+  const isServiceComplaint = /\b(reclama|reclamacao|atendimento|atendente|suporte|experiencia|insatisfacao)\b/.test(text);
+  if (isServiceComplaint && (selectedArea === "auto" || selectedArea === "commercial")) {
+    return "service";
+  }
+  if (selectedArea !== "auto") return selectedArea;
   const ranked = Object.entries(areaKeywords)
-    .map(([area, keywords]) => ({
+    .map(([area, keywordWeights]) => ({
       area,
-      score: keywords.reduce((sum, keyword) => sum + (text.includes(keyword) ? 1 : 0), 0),
+      score: Object.entries(keywordWeights).reduce((sum, [keyword, weight]) => {
+        return sum + (text.includes(keyword) ? weight : 0);
+      }, 0),
     }))
     .sort((a, b) => b.score - a.score);
   return ranked[0].score > 0 ? ranked[0].area : "operations";
@@ -608,7 +743,7 @@ function renderQuestion() {
   const question = currentQuestion();
   stepLabel.textContent = `Pergunta ${state.asked.length + 1}`;
   questionText.textContent = question.text;
-  questionCategory.textContent = `${categories[question.category].fishbone}: ${categories[question.category].title}`;
+  questionCategory.textContent = `Linha de investigacao: ${categories[question.category].title}`;
   contextLine.textContent = `${areaLabels[state.area]} | ${segmentLabels[state.segment]} | ${audienceLabels[state.audience]}`;
   progressBar.style.width = `${Math.min(100, (state.asked.length / MAX_QUESTIONS) * 100)}%`;
   renderHistory();
