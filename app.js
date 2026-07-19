@@ -273,10 +273,16 @@ const categories = {
 
 const questionBank = [
   {
-    text: "A causa parece estar mais ligada a habilidade tecnica, postura/comunicacao ou falta de rotina?",
+    text: "A equipe demonstra dificuldade tecnica para executar essa atividade corretamente?",
     category: "people",
     areas: ["service", "commercial", "operations", "product", "people"],
-    evidence: "O problema pode envolver habilidade tecnica, comportamento ou disciplina de rotina.",
+    evidence: "O problema pode envolver habilidade tecnica insuficiente.",
+  },
+  {
+    text: "A comunicação com o cliente parece influenciar o problema?",
+    category: "people",
+    areas: ["service", "commercial", "product", "people"],
+    evidence: "O problema pode envolver comunicacao, postura ou habilidade comportamental.",
   },
   {
     text: "As pessoas sabem exatamente qual comportamento e esperado nessa situacao?",
@@ -286,17 +292,23 @@ const questionBank = [
     evidence: "Pode faltar clareza sobre o comportamento esperado.",
   },
   {
-    text: "O produto ou servico foi desenhado para o publico que esta usando ou reclamando?",
+    text: "A oferta combina com o publico que esta reclamando?",
     category: "customer",
     areas: ["service", "commercial", "product"],
     reverse: true,
     evidence: "Pode haver desalinhamento entre produto, servico e publico real.",
   },
   {
-    text: "O problema apareceu depois de mudar produto, fornecedor, materia-prima, cardapio, catalogo ou versao?",
+    text: "O problema apareceu depois de uma mudanca na oferta?",
     category: "input",
     areas: ["operations", "product", "service", "commercial"],
-    evidence: "Mudanca em produto, fornecedor ou insumo pode ter iniciado o problema.",
+    evidence: "Mudanca no produto ou servico pode ter iniciado o problema.",
+  },
+  {
+    text: "O problema apareceu depois de uma mudanca na entrada fornecida?",
+    category: "input",
+    areas: ["operations", "product"],
+    evidence: "Mudanca em fornecedor ou insumo pode ter iniciado o problema.",
   },
   {
     text: "O jeito real de executar hoje e diferente do padrao que foi desenhado?",
@@ -312,10 +324,16 @@ const questionBank = [
     evidence: "Pode faltar controle visual ou sinal claro de desvio.",
   },
   {
-    text: "O problema envolve espera, retrabalho, excesso de etapas, deslocamento ou aprovacao desnecessaria?",
+    text: "O problema envolve espera excessiva para o cliente?",
     category: "method",
     areas: ["service", "commercial", "operations", "product", "finance"],
-    evidence: "O fluxo pode ter desperdicios ou etapas que reduzem qualidade.",
+    evidence: "O fluxo pode ter espera excessiva.",
+  },
+  {
+    text: "O problema gera retrabalho para corrigir algo que deveria sair certo da primeira vez?",
+    category: "method",
+    areas: ["service", "commercial", "operations", "product", "finance"],
+    evidence: "O fluxo pode estar gerando retrabalho.",
   },
   {
     text: "A reclamação acontece mais em um canal específico de atendimento?",
@@ -324,10 +342,16 @@ const questionBank = [
     evidence: "A reclamação pode estar concentrada em um canal de atendimento.",
   },
   {
-    text: "O cliente reclama mais do tempo de resposta ou da forma como foi tratado?",
+    text: "O cliente reclama do tempo de resposta?",
     category: "customer",
     areas: ["service"],
-    evidence: "A reclamação pode estar ligada a tempo de resposta ou postura no contato.",
+    evidence: "A reclamação pode estar ligada ao tempo de resposta.",
+  },
+  {
+    text: "O cliente reclama da forma como foi tratado?",
+    category: "people",
+    areas: ["service"],
+    evidence: "A reclamação pode estar ligada a postura ou abordagem no atendimento.",
   },
   {
     text: "Existe um padrão claro de como a equipe deve conduzir esse atendimento?",
@@ -344,10 +368,16 @@ const questionBank = [
     evidence: "Os motivos das reclamações podem não estar classificados de forma útil.",
   },
   {
-    text: "As reclamações se concentram em algumas pessoas ou turnos?",
+    text: "As reclamações se concentram em algumas pessoas?",
     category: "people",
     areas: ["service"],
-    evidence: "A variação pode estar relacionada a pessoa, turno ou escala.",
+    evidence: "A variação pode estar relacionada a pessoas específicas.",
+  },
+  {
+    text: "As reclamações se concentram em algum horário?",
+    category: "method",
+    areas: ["service"],
+    evidence: "A variação pode estar relacionada a turno, horário ou escala.",
   },
   {
     text: "A queda aparece mais em uma etapa especifica do funil de vendas?",
@@ -356,7 +386,7 @@ const questionBank = [
     evidence: "A perda parece concentrada em uma etapa do funil.",
   },
   {
-    text: "A quantidade de leads ou oportunidades diminuiu recentemente?",
+    text: "O volume de oportunidades diminuiu recentemente?",
     category: "market",
     areas: ["commercial"],
     evidence: "A demanda ou volume de oportunidades pode ter caido.",
@@ -413,14 +443,14 @@ const questionBank = [
     evidence: "Ha variacao relevante de abordagem entre pessoas.",
   },
   {
-    text: "A equipe domina bem os diferenciais do produto ou servico?",
+    text: "A equipe domina bem os diferenciais da oferta?",
     category: "people",
     areas: ["commercial", "product", "service"],
     reverse: true,
     evidence: "Pode faltar dominio sobre diferenciais e argumentos.",
   },
   {
-    text: "O CRM ou controle atual mostra as proximas acoes de cada oportunidade?",
+    text: "O controle atual mostra as proximas acoes de cada oportunidade?",
     category: "tools",
     areas: ["commercial"],
     reverse: true,
@@ -478,7 +508,7 @@ const questionBank = [
     evidence: "O treinamento pratico pode nao ter sido suficiente.",
   },
   {
-    text: "O problema aumenta quando entra gente nova ou substituta?",
+    text: "O problema aumenta quando entra gente nova?",
     category: "people",
     areas: ["operations", "service", "people", "commercial"],
     evidence: "O problema aumenta com troca ou entrada de pessoas.",
@@ -498,19 +528,19 @@ const questionBank = [
     evidence: "A origem temporal do problema ainda e pouco visivel.",
   },
   {
-    text: "O problema aparece depois de receber informacao, pedido ou material de fora?",
+    text: "O problema aparece depois de receber uma entrada incompleta?",
     category: "input",
     areas: ["operations", "product", "service", "finance"],
     evidence: "A falha pode vir de uma entrada externa.",
   },
   {
-    text: "O problema acontece mais com um fornecedor, canal ou tipo de pedido?",
+    text: "O problema se concentra em uma origem especifica?",
     category: "input",
     areas: ["operations", "product", "service", "commercial"],
     evidence: "Existe concentracao em fornecedor, canal ou tipo de entrada.",
   },
   {
-    text: "Alguma ferramenta, sistema ou equipamento falha durante a rotina?",
+    text: "Alguma ferramenta de trabalho falha durante a rotina?",
     category: "tools",
     areas: ["operations", "product", "service", "finance", "people", "commercial"],
     evidence: "Ferramenta, sistema ou equipamento pode estar prejudicando a execucao.",
@@ -544,60 +574,60 @@ const questionBank = [
 const segmentQuestionBoost = {
   retail: {
     commercial: [
-      "O desempenho muda conforme loja, vendedor, horario ou vitrine?",
+      "O desempenho muda conforme a loja?",
       "O cliente compara preco com facilidade antes de decidir?",
     ],
     service: [
-      "A reclamação se concentra em uma loja, horário, canal ou atendente específico?",
+      "A reclamação se concentra em um canal de atendimento específico?",
       "O cliente recebe a mesma orientação independentemente de quem atende?",
     ],
   },
   services: {
     commercial: [
       "A percepcao de valor depende muito da explicacao feita antes da venda?",
-      "A entrega real varia conforme agenda ou profissional?",
+      "A entrega real varia conforme o profissional?",
     ],
     service: [
-      "A reclamação aparece mais antes, durante ou depois da execução do serviço?",
+      "A reclamação aparece antes da execução do serviço?",
       "A expectativa combinada com o cliente fica registrada antes do atendimento?",
     ],
   },
   industry: {
     operations: [
-      "A variacao aparece mais por lote, turno, maquina ou materia-prima?",
+      "A variacao aparece mais em alguns lotes?",
       "Existe controle de qualidade antes da proxima etapa receber o item?",
     ],
   },
   restaurant: {
     service: [
-      "A reclamação muda entre salão, retirada e delivery?",
+      "A reclamação acontece mais no delivery?",
       "O problema aumenta em horário de pico?",
     ],
     operations: [
-      "O problema muda conforme horario de pico, equipe ou canal de pedido?",
-      "A experiencia percebida pelo cliente muda entre salao, retirada e delivery?",
+      "O problema aumenta em horario de pico?",
+      "A experiencia percebida pelo cliente piora no delivery?",
     ],
   },
   ecommerce: {
     commercial: [
-      "A perda aparece mais em trafego, carrinho, checkout ou pos-compra?",
+      "A perda aparece mais antes do checkout?",
       "O cliente recebe informacoes suficientes antes de comprar online?",
     ],
     service: [
-      "A reclamação acontece mais antes ou depois da entrega?",
+      "A reclamação acontece mais depois da entrega?",
       "O cliente consegue acompanhar o status do pedido sem chamar o atendimento?",
     ],
   },
   health: {
     service: [
-      "O problema envolve expectativa, espera, agenda ou orientação ao paciente?",
+      "O problema envolve tempo de espera?",
       "Existe padrão claro para registrar e acompanhar cada atendimento?",
     ],
   },
   education: {
     service: [
-      "O problema muda conforme turma, professor, canal ou perfil do aluno?",
-      "O aluno ou responsável entende claramente a evolução esperada?",
+      "O problema se concentra em um grupo específico?",
+      "O responsável entende claramente a evolução esperada?",
     ],
   },
 };
