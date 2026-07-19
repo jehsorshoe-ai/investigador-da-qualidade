@@ -12,75 +12,152 @@
     <link rel="stylesheet" href="styles.css" />
     <title>O Investigador da Qualidade</title>
   </head>
-  <body>
+  <body data-view="home">
+    <div class="ambient-scene" aria-hidden="true">
+      <span class="ambient-grid"></span>
+      <span class="ambient-axis ambient-axis-x"></span>
+      <span class="ambient-axis ambient-axis-y"></span>
+      <span class="ambient-signal signal-one"></span>
+      <span class="ambient-signal signal-two"></span>
+      <span class="ambient-signal signal-three"></span>
+    </div>
+
     <main class="app-shell" id="app">
       <section class="screen screen-home is-active" data-screen="home">
-        <div class="brand-mark" aria-hidden="true">
-          <div class="hat"></div>
-          <div class="lens"></div>
-        </div>
-        <p class="eyebrow">Agente de causa raiz</p>
-        <h1>O Investigador da Qualidade</h1>
-        <p class="lead">
-          Responda perguntas simples e receba uma hipótese de causa raiz com plano de ação.
-        </p>
-
-        <form class="start-form" id="startForm">
-          <label for="profile">Quem está investigando?</label>
-          <select id="profile" name="profile">
-            <option value="Empresário / gestor">Empresário / gestor</option>
-            <option value="Funcionário / operador">Funcionário / operador</option>
-            <option value="Consumidor comum">Consumidor comum</option>
-          </select>
-
-          <div class="context-grid">
-            <div>
-              <label for="segment">Segmento</label>
-              <select id="segment" name="segment">
-                <option value="generic">Geral</option>
-                <option value="retail">Comércio / varejo</option>
-                <option value="services">Serviços</option>
-                <option value="industry">Indústria</option>
-                <option value="restaurant">Restaurante / alimentação</option>
-                <option value="ecommerce">E-commerce</option>
-                <option value="health">Clínica / saúde</option>
-                <option value="education">Educação</option>
-              </select>
-            </div>
-
-            <div>
-              <label for="area">Área do problema</label>
-              <select id="area" name="area">
-                <option value="auto">Detectar automaticamente</option>
-                <option value="commercial">Vendas / comercial</option>
-                <option value="service">Atendimento / experiência</option>
-                <option value="operations">Operação / entrega</option>
-                <option value="people">Pessoas / liderança</option>
-                <option value="product">Produto / serviço</option>
-                <option value="finance">Financeiro</option>
-              </select>
-            </div>
+        <header class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">
+            <span class="brand-core"></span>
+            <span class="brand-trace"></span>
           </div>
+          <div>
+            <strong>Causa Real</strong>
+            <span>Investigador da Qualidade</span>
+          </div>
+        </header>
 
-          <label for="audience">Público afetado</label>
-          <select id="audience" name="audience">
-            <option value="mixed">Misto / não sei</option>
-            <option value="b2c">Consumidor final</option>
-            <option value="b2b">Empresas / clientes corporativos</option>
-            <option value="internal">Equipe interna</option>
-          </select>
+        <div class="home-panel-stack">
+          <article class="presentation-stage" id="presentationStage">
+            <div class="stage-visual" aria-hidden="true">
+              <div class="motion-sheet">
+                <div class="sheet-topline">
+                  <span>01 / INVESTIGAÇÃO</span>
+                  <i></i>
+                </div>
+                <div class="causal-diagram">
+                  <span class="causal-line line-a"></span>
+                  <span class="causal-line line-b"></span>
+                  <span class="causal-line line-c"></span>
+                  <span class="causal-node node-origin"></span>
+                  <span class="causal-node node-a"></span>
+                  <span class="causal-node node-b"></span>
+                  <span class="causal-node node-c"></span>
+                  <span class="causal-node node-result"></span>
+                </div>
+                <div class="sheet-readout">
+                  <span>Sinais conectados</span>
+                  <strong>CAUSA EM FOCO</strong>
+                </div>
+                <span class="sheet-scan"></span>
+              </div>
+            </div>
 
-          <label for="problem">Descreva o problema em uma frase</label>
-          <textarea
-            id="problem"
-            name="problem"
-            rows="4"
-            placeholder="Ex.: Meus clientes reclamam de atraso na entrega"
-            required
-          ></textarea>
+            <div class="stage-copy">
+              <p class="eyebrow">Investigação orientada por evidências</p>
+              <h1>Causa Real</h1>
+              <p class="lead">Do sintoma ao próximo passo.</p>
+              <button class="primary-action stage-action" id="openInvestigation" type="button">
+                Iniciar investigação <span aria-hidden="true">→</span>
+              </button>
+            </div>
 
-          <button class="primary-action" type="submit">Começar investigação</button>
-        </form>
+            <div class="stage-status" aria-hidden="true">
+              <span></span>
+              <small>SISTEMA PRONTO</small>
+              <b>001</b>
+            </div>
+          </article>
+
+          <form class="start-form" id="startForm">
+            <div class="form-heading">
+              <button
+                class="icon-button form-back"
+                id="closeInvestigationForm"
+                type="button"
+                aria-label="Voltar para a apresentação"
+              >
+                ←
+              </button>
+              <div>
+                <p class="eyebrow">Nova investigação</p>
+                <h2>Contexto inicial</h2>
+              </div>
+              <span>01</span>
+            </div>
+
+            <div class="form-field">
+              <label for="profile">Quem está investigando?</label>
+              <select id="profile" name="profile">
+                <option value="Empresário / gestor">Empresário / gestor</option>
+                <option value="Funcionário / operador">Funcionário / operador</option>
+                <option value="Consumidor comum">Consumidor comum</option>
+              </select>
+            </div>
+
+            <div class="context-grid">
+              <div class="form-field">
+                <label for="segment">Segmento</label>
+                <select id="segment" name="segment">
+                  <option value="generic">Geral</option>
+                  <option value="retail">Comércio / varejo</option>
+                  <option value="services">Serviços</option>
+                  <option value="industry">Indústria</option>
+                  <option value="restaurant">Restaurante / alimentação</option>
+                  <option value="ecommerce">E-commerce</option>
+                  <option value="health">Clínica / saúde</option>
+                  <option value="education">Educação</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="area">Área do problema</label>
+                <select id="area" name="area">
+                  <option value="auto">Detectar automaticamente</option>
+                  <option value="commercial">Vendas / comercial</option>
+                  <option value="service">Atendimento / experiência</option>
+                  <option value="operations">Operação / entrega</option>
+                  <option value="people">Pessoas / liderança</option>
+                  <option value="product">Produto / serviço</option>
+                  <option value="finance">Financeiro</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="audience">Público afetado</label>
+              <select id="audience" name="audience">
+                <option value="mixed">Misto / não sei</option>
+                <option value="b2c">Consumidor final</option>
+                <option value="b2b">Empresas / clientes corporativos</option>
+                <option value="internal">Equipe interna</option>
+              </select>
+            </div>
+
+            <div class="form-field problem-field">
+              <label for="problem">Descreva o problema em uma frase</label>
+              <textarea
+                id="problem"
+                name="problem"
+                rows="4"
+                placeholder="Ex.: Meus clientes reclamam de atraso na entrega"
+                required
+              ></textarea>
+            </div>
+
+            <button class="primary-action form-submit" type="submit">
+              Começar investigação <span aria-hidden="true">→</span>
+            </button>
+          </form>
+        </div>
       </section>
 
       <section class="screen" data-screen="investigation">
@@ -152,6 +229,7 @@
       </section>
     </main>
 
+    <script src="presentation.js"></script>
     <script src="engine-v2/phenomenonClassifier.js"></script>
     <script src="engine-v2/hypothesisEngine.js"></script>
     <script src="engine-v2/informationGain.js"></script>
