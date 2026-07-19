@@ -9,7 +9,8 @@
       content="Investigador da Qualidade: descubra causas raiz e gere planos de ação com perguntas guiadas."
     />
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="stylesheet" href="styles.css?v=20260719" />
+    <link rel="preload" href="assets/causa-real-hero.webp" as="image" type="image/webp" />
+    <link rel="stylesheet" href="styles.css?v=20260719b" />
     <title>O Investigador da Qualidade</title>
   </head>
   <body data-view="home">
@@ -38,33 +39,25 @@
         <div class="home-panel-stack">
           <article class="presentation-stage" id="presentationStage">
             <div class="stage-visual" aria-hidden="true">
-              <div class="motion-sheet">
-                <div class="sheet-topline">
-                  <span>01 / INVESTIGAÇÃO</span>
-                  <i></i>
-                </div>
-                <div class="causal-diagram">
-                  <span class="causal-line line-a"></span>
-                  <span class="causal-line line-b"></span>
-                  <span class="causal-line line-c"></span>
-                  <span class="causal-node node-origin"></span>
-                  <span class="causal-node node-a"></span>
-                  <span class="causal-node node-b"></span>
-                  <span class="causal-node node-c"></span>
-                  <span class="causal-node node-result"></span>
-                </div>
-                <div class="sheet-readout">
-                  <span>Sinais conectados</span>
-                  <strong>CAUSA EM FOCO</strong>
-                </div>
-                <span class="sheet-scan"></span>
+              <img src="assets/causa-real-hero.webp" alt="" fetchpriority="high" />
+              <span class="hero-scan"></span>
+              <div class="hero-core-status">
+                <span></span>
+                <small>NÚCLEO CAUSAL</small>
+                <strong>ATIVO</strong>
+              </div>
+              <div class="hero-metrics">
+                <span><small>01</small> PESSOAS</span>
+                <span><small>02</small> PRODUTO</span>
+                <span><small>03</small> PROCESSO</span>
               </div>
             </div>
 
             <div class="stage-copy">
-              <p class="eyebrow">Investigação orientada por evidências</p>
+              <p class="eyebrow">Investigação de causa raiz</p>
               <h1>Causa Real</h1>
-              <p class="lead">Do sintoma ao próximo passo.</p>
+              <p class="hero-promise">Encontre o que realmente está causando o problema.</p>
+              <p class="lead">Do sintoma às evidências. Das evidências ao próximo passo.</p>
               <button class="primary-action stage-action" id="openInvestigation" type="button">
                 Iniciar investigação <span aria-hidden="true">→</span>
               </button>
@@ -73,7 +66,7 @@
             <div class="stage-status" aria-hidden="true">
               <span></span>
               <small>SISTEMA PRONTO</small>
-              <b>001</b>
+              <b>ANÁLISE 001</b>
             </div>
           </article>
 
