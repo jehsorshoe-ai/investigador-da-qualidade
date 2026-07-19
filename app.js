@@ -81,7 +81,7 @@ const classificationTargets = {
     domain: "atendimento",
     line: "SERVICE_FAILURE",
     area: "service",
-    categories: ["customer", "method", "people", "measurement", "tools", "offer"],
+    categories: ["customer", "method", "people", "measurement", "tools"],
   },
   salesFunnel: {
     phenomenon: "queda_vendas",
@@ -397,6 +397,18 @@ const questionBank = [
     text: "A equipe consegue perceber rapidamente quando a rotina saiu do normal?",
     category: "measurement",
     areas: ["service", "commercial", "operations", "product", "people", "finance"],
+    id: "service_deviation_detection",
+    questionPurpose: "testar_deteccao_de_desvios",
+    targetHypothesis: "lack_of_monitoring",
+    factsOnPositive: ["deviation_detection_available"],
+    factsOnNegative: ["low_deviation_detection"],
+    hypothesisDelta: {
+      yes: { lack_of_monitoring: -1 },
+      partial: { lack_of_monitoring: 1 },
+      no: { lack_of_monitoring: 2, missing_alert: 1, reactive_process: 1 },
+      unknown: { lack_of_monitoring: 0.5 },
+    },
+    expectedInformationGain: 0.8,
     reverse: true,
     evidence: "Pode faltar controle visual ou sinal claro de desvio.",
   },
@@ -416,12 +428,28 @@ const questionBank = [
     text: "A reclamação acontece mais em um canal específico de atendimento?",
     category: "customer",
     areas: ["service"],
+    id: "service_channel_concentration",
+    questionPurpose: "testar_concentracao_por_canal",
+    targetHypothesis: "channel_specific_failure",
+    factsOnPositive: ["service_channel_concentration"],
+    factsOnNegative: ["no_channel_concentration"],
+    expectedInformationGain: 0.62,
     evidence: "A reclamação pode estar concentrada em um canal de atendimento.",
   },
   {
     text: "O cliente reclama do tempo de resposta?",
     category: "customer",
     areas: ["service"],
+    id: "service_response_time_symptom",
+    questionPurpose: "confirmar_sintoma_de_tempo",
+    targetHypothesis: "response_time_symptom",
+    factsOnPositive: ["response_time_symptom_confirmed"],
+    hypothesisDelta: {
+      yes: { response_time_symptom: 2, missing_service_sla: 0.8, lack_of_monitoring: 0.6 },
+      partial: { response_time_symptom: 1 },
+      no: { response_time_symptom: -1 },
+    },
+    expectedInformationGain: 0.78,
     evidence: "A reclamação pode estar ligada ao tempo de resposta.",
   },
   {
@@ -441,6 +469,17 @@ const questionBank = [
     text: "A equipe registra o motivo real de cada reclamação de atendimento?",
     category: "measurement",
     areas: ["service"],
+    id: "service_complaint_reason_recorded",
+    questionPurpose: "testar_qualidade_do_registro",
+    targetHypothesis: "complaint_measurement_quality",
+    factsOnPositive: ["complaint_reason_registered"],
+    factsOnNegative: ["complaint_reason_not_registered"],
+    hypothesisDelta: {
+      yes: { poor_complaint_classification: -1, complaint_measurement_quality: -0.5 },
+      no: { poor_complaint_classification: 2 },
+      partial: { poor_complaint_classification: 1 },
+    },
+    expectedInformationGain: 0.68,
     reverse: true,
     evidence: "Os motivos das reclamações podem não estar classificados de forma útil.",
   },
@@ -792,6 +831,62 @@ const investigationRouteQuestions = {
       expectedInformationGain: 0.82,
       evidence: "A promessa ao cliente pode nao estar registrada de forma verificavel.",
     },
+    {
+      id: "late_service_alert",
+      text: "Existe algum controle visual que alerte quando o prazo de atendimento esta sendo ultrapassado?",
+      type: questionTypes.boolean,
+      category: "measurement",
+      reverse: true,
+      triggerAllFacts: ["response_time_symptom_confirmed", "low_deviation_detection"],
+      questionPurpose: "testar_monitoramento_de_prazo",
+      targetHypothesis: "lack_of_monitoring",
+      expectedInformationGain: 0.92,
+      parentQuestionId: "service_deviation_detection",
+      triggerAnswer: "no",
+      reasonForQuestion:
+        "Usuario confirmou reclamacao por tempo de resposta e informou que a equipe nao percebe rapidamente quando a rotina sai do normal.",
+      evidence: "Pode faltar alerta, indicador ou controle para atendimento fora do prazo.",
+    },
+    {
+      id: "service_sla",
+      text: "Existe prazo definido para cada tipo de atendimento?",
+      type: questionTypes.boolean,
+      category: "method",
+      reverse: true,
+      triggerFacts: ["response_time_symptom_confirmed"],
+      questionPurpose: "testar_sla_de_atendimento",
+      targetHypothesis: "missing_service_sla",
+      expectedInformationGain: 0.86,
+      parentQuestionId: "service_response_time_symptom",
+      triggerAnswer: "yes",
+      reasonForQuestion: "Usuario confirmou que o cliente reclama do tempo de resposta.",
+      evidence: "Pode faltar prazo definido para orientar e cobrar o atendimento.",
+    },
+    {
+      id: "delayed_service_owner",
+      text: "Existe responsavel definido para acompanhar atendimentos atrasados?",
+      type: questionTypes.boolean,
+      category: "method",
+      reverse: true,
+      triggerFacts: ["response_time_symptom_confirmed", "low_deviation_detection"],
+      questionPurpose: "testar_responsavel_por_atrasos",
+      targetHypothesis: "unclear_delay_owner",
+      expectedInformationGain: 0.84,
+      reasonForQuestion: "Tempo de resposta foi confirmado como sintoma; agora e preciso checar responsabilidade de acompanhamento.",
+      evidence: "Pode faltar responsavel claro para acompanhar atendimentos atrasados.",
+    },
+    {
+      id: "service_capacity_peak",
+      text: "Os atrasos aumentam quando a demanda de atendimento cresce?",
+      type: questionTypes.boolean,
+      category: "method",
+      triggerFacts: ["response_time_symptom_confirmed"],
+      questionPurpose: "testar_capacidade",
+      targetHypothesis: "capacity_overload",
+      expectedInformationGain: 0.78,
+      reasonForQuestion: "Tempo de resposta foi confirmado; a investigacao precisa separar falha de controle de falta de capacidade.",
+      evidence: "A demora pode estar ligada a carga, fila ou capacidade insuficiente.",
+    },
   ],
   FUNNEL_COMMERCIAL: [
     {
@@ -1019,6 +1114,9 @@ const state = {
   activeHypotheses: [],
   rejectedHypotheses: [],
   confirmedFacts: [],
+  confirmedFactDetails: {},
+  unresolvedQuestions: [],
+  hypothesisScores: {},
   currentDepth: 0,
   investigationPath: [],
   debugEvents: [],
@@ -1364,6 +1462,9 @@ function beginInvestigation({ profile, segment, selectedArea, audience, problem 
   state.activeHypotheses = [];
   state.rejectedHypotheses = [];
   state.confirmedFacts = [];
+  state.confirmedFactDetails = {};
+  state.unresolvedQuestions = [];
+  state.hypothesisScores = {};
   state.currentDepth = 0;
   state.investigationPath = [];
   state.debugEvents = [];
@@ -1382,7 +1483,10 @@ function beginInvestigation({ profile, segment, selectedArea, audience, problem 
     id: line,
     label: investigationLineLabels[line] || line,
     score: line === state.route.selectedLine ? 2 : 1,
+    supportingEvidence: [state.classification.reason],
+    contradictingEvidence: [],
   }));
+  state.hypothesisScores = Object.fromEntries(state.activeHypotheses.map((hypothesis) => [hypothesis.id, hypothesis.score]));
   state.debugEvents.push({
     type: "classification",
     classification: state.classification,
@@ -1499,8 +1603,17 @@ function canAskQuestion(question, askedIndexes) {
   if (askedIndexes.has(state.questions.indexOf(question))) return false;
   const askedIds = askedQuestionIds();
   if (question.requiredAsked?.some((id) => !askedIds.has(id))) return false;
+  if (question.triggerAllFacts?.length) {
+    return question.triggerAllFacts.every((fact) => state.confirmedFacts.includes(fact));
+  }
   if (question.triggerFacts?.length) {
     return question.triggerFacts.some((fact) => state.confirmedFacts.includes(fact));
+  }
+  if (state.route?.selectedLine === "SERVICE_FAILURE") {
+    const needsCommercialEvidence = /promessa|proposta|preco|valor|funil|convers|fechamento|venda/i.test(question.text);
+    if (needsCommercialEvidence && !state.confirmedFacts.includes("broken_promise") && !state.confirmedFacts.includes("route_sales")) {
+      return false;
+    }
   }
   return true;
 }
@@ -1571,7 +1684,9 @@ function renderQuestion() {
   const question = currentQuestion();
   stepLabel.textContent = `Pergunta ${state.asked.length + 1}`;
   questionText.textContent = question.text;
-  questionCategory.textContent = `Linha de investigacao: ${categories[question.category].title}`;
+  questionCategory.textContent = `Linha de investigacao: ${
+    investigationLineLabels[state.route?.selectedLine] || categories[question.category].title
+  }`;
   contextLine.textContent = `${investigationLineLabels[state.route?.selectedLine] || areaLabels[state.area]} | ${segmentLabels[state.segment]} | ${audienceLabels[state.audience]}`;
   progressBar.style.width = `${Math.min(100, (state.asked.length / MAX_QUESTIONS) * 100)}%`;
   renderAnswerControls(question);
@@ -1625,13 +1740,19 @@ function applyRelatedScore(question, answer, primaryWeight) {
   }[question.category];
 
   (related || []).forEach((category) => {
+    if (state.route?.selectedLine === "SERVICE_FAILURE" && ["offer", "market", "funnel"].includes(category)) return;
     state.scores[category] += 0.35;
   });
 }
 
-function registerFacts(facts = []) {
+function registerFacts(facts = [], source = {}) {
   facts.forEach((fact) => {
     if (!state.confirmedFacts.includes(fact)) state.confirmedFacts.push(fact);
+    state.confirmedFactDetails[fact] = {
+      questionId: source.questionId,
+      answer: source.answer,
+      evidence: source.evidence,
+    };
   });
 }
 
@@ -1639,17 +1760,83 @@ function registerEvidence(evidence) {
   if (evidence) state.evidence.push(evidence);
 }
 
-function registerHypothesis(id, score = 1) {
+function registerHypothesis(id, score = 1, evidence, contradicting = false) {
+  if (!id) return;
+  state.hypothesisScores[id] = (state.hypothesisScores[id] || 0) + score;
   const existing = state.activeHypotheses.find((hypothesis) => hypothesis.id === id);
   if (existing) {
     existing.score += score;
+    if (evidence) {
+      const list = contradicting ? existing.contradictingEvidence : existing.supportingEvidence;
+      if (!list.includes(evidence)) list.push(evidence);
+    }
     return;
   }
   state.activeHypotheses.push({
     id,
     label: investigationLineLabels[id] || categories[id]?.title || id,
     score,
+    supportingEvidence: evidence && !contradicting ? [evidence] : [],
+    contradictingEvidence: evidence && contradicting ? [evidence] : [],
   });
+}
+
+function hypothesisScoreSnapshot() {
+  return { ...state.hypothesisScores };
+}
+
+function scoreDelta(before, after) {
+  const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+  return Object.fromEntries([...keys].map((key) => [key, (after[key] || 0) - (before[key] || 0)]));
+}
+
+function factsForAnswer(question, answer) {
+  if (answer === "yes") return question.factsOnPositive || [];
+  if (answer === "no") return question.factsOnNegative || [];
+  if (answer === "partial") return question.factsOnPartial || [];
+  return question.factsOnUnknown || [];
+}
+
+function applyHypothesisDelta(question, answer, evidence) {
+  const deltas = question.hypothesisDelta?.[answer] || {};
+  Object.entries(deltas).forEach(([hypothesis, delta]) => {
+    registerHypothesis(hypothesis, delta, evidence, delta < 0);
+  });
+}
+
+function supportingEvidenceForFacts(facts) {
+  return facts.map((fact) => state.confirmedFactDetails[fact]?.evidence || fact);
+}
+
+function deriveReasonForQuestion(question) {
+  if (!question) return "";
+  if (question.reasonForQuestion) return question.reasonForQuestion;
+  if (question.triggerAllFacts?.length) {
+    return `Pergunta feita agora porque os fatos confirmados (${question.triggerAllFacts.join(", ")}) aumentaram a hipotese ${question.targetHypothesis}.`;
+  }
+  if (question.triggerFacts?.length) {
+    return `Pergunta feita agora porque um dos fatos (${question.triggerFacts.join(", ")}) esta ativo na investigacao.`;
+  }
+  if (question.targetHypothesis) {
+    return `Pergunta feita para reduzir incerteza sobre a hipotese ${question.targetHypothesis}.`;
+  }
+  return "Pergunta feita para reduzir incerteza dentro da rota causal atual.";
+}
+
+function parentQuestionFor(question) {
+  if (question.parentQuestionId) return question.parentQuestionId;
+  const fact = [...(question.triggerAllFacts || []), ...(question.triggerFacts || [])].find(
+    (candidate) => state.confirmedFactDetails[candidate],
+  );
+  return fact ? state.confirmedFactDetails[fact].questionId : state.asked.at(-1)?.questionId;
+}
+
+function triggerAnswerFor(question) {
+  if (question.triggerAnswer) return question.triggerAnswer;
+  const fact = [...(question.triggerAllFacts || []), ...(question.triggerFacts || [])].find(
+    (candidate) => state.confirmedFactDetails[candidate],
+  );
+  return fact ? state.confirmedFactDetails[fact].answer : state.asked.at(-1)?.answer;
 }
 
 function applyOptionAnswer(question, answer) {
@@ -1657,26 +1844,31 @@ function applyOptionAnswer(question, answer) {
   Object.entries(option.scores || { [question.category]: 1 }).forEach(([category, score]) => {
     if (state.scores[category] !== undefined) state.scores[category] += score;
   });
-  registerFacts(option.facts || []);
+  registerFacts(option.facts || [], { questionId: question.id, answer, evidence: option.evidence || question.evidence });
   registerEvidence(option.evidence || question.evidence);
-  registerHypothesis(question.targetHypothesis, option.scores ? 1 : 0.5);
+  registerHypothesis(question.targetHypothesis, option.scores ? 1 : 0.5, option.evidence || question.evidence);
   return option;
 }
 
 function recordAnswer(answer) {
   const question = currentQuestion();
+  const beforeHypothesisScores = hypothesisScoreSnapshot();
   const isChoiceQuestion = questionType(question) === questionTypes.multipleChoice;
   const option = isChoiceQuestion ? applyOptionAnswer(question, answer) : null;
   const primaryWeight = isChoiceQuestion ? 2 : answerWeight(answer, question.reverse);
+  const directFacts = !isChoiceQuestion ? factsForAnswer(question, answer) : [];
 
   if (!isChoiceQuestion) {
     state.scores[question.category] += primaryWeight;
     applyRelatedScore(question, answer, primaryWeight);
+    registerFacts(directFacts, { questionId: question.id, answer, evidence: question.evidence });
+    applyHypothesisDelta(question, answer, question.evidence);
     if (primaryWeight > 0) {
       registerEvidence(question.evidence);
-      registerHypothesis(question.targetHypothesis || question.category, primaryWeight / 2);
+      registerHypothesis(question.targetHypothesis || question.category, primaryWeight / 2, question.evidence);
     } else if (primaryWeight < 0 && question.targetHypothesis) {
       state.rejectedHypotheses.push(question.targetHypothesis);
+      registerHypothesis(question.targetHypothesis, primaryWeight / 2, question.evidence, true);
     }
   }
 
@@ -1693,8 +1885,18 @@ function recordAnswer(answer) {
     evidence: question.evidence,
     questionPurpose: question.questionPurpose,
     targetHypothesis: question.targetHypothesis,
+    parentQuestionId: question.parentQuestionId,
+    triggerAnswer: question.triggerAnswer,
+    reasonForQuestion: deriveReasonForQuestion(question),
     positive: primaryWeight > 0,
   });
+
+  const afterAnswerScores = hypothesisScoreSnapshot();
+  const transitionScoreDelta = scoreDelta(beforeHypothesisScores, afterAnswerScores);
+  const supportingEvidence = [
+    ...(option?.facts ? supportingEvidenceForFacts(option.facts) : []),
+    ...supportingEvidenceForFacts(directFacts),
+  ];
 
   if (shouldFinish()) {
     return { done: true, question };
@@ -1702,7 +1904,29 @@ function recordAnswer(answer) {
 
   const nextIndex = nextQuestionIndex();
   state.index = nextIndex === -1 ? 0 : nextIndex;
-  return { done: false, question, nextQuestion: currentQuestion() };
+  const nextQuestion = currentQuestion();
+  const nextTriggerFacts = [...(nextQuestion?.triggerAllFacts || []), ...(nextQuestion?.triggerFacts || [])];
+  const nextSupportingEvidence = supportingEvidenceForFacts(nextTriggerFacts);
+  const transition = {
+    type: "causal_transition",
+    parentQuestionId: question.id,
+    triggerAnswer: answer,
+    answeredQuestionId: question.id,
+    nextQuestionId: nextQuestion?.id,
+    targetHypothesis: nextQuestion?.targetHypothesis,
+    reasonForQuestion: deriveReasonForQuestion(nextQuestion),
+    supportingEvidence: [...new Set([...supportingEvidence, ...nextSupportingEvidence])],
+    scoreDelta: transitionScoreDelta,
+    investigationPath: state.route?.selectedLine,
+  };
+  state.debugEvents.push(transition);
+  if (nextQuestion) {
+    nextQuestion.parentQuestionId = nextQuestion.parentQuestionId || parentQuestionFor(nextQuestion);
+    nextQuestion.triggerAnswer = nextQuestion.triggerAnswer || triggerAnswerFor(nextQuestion);
+    nextQuestion.reasonForQuestion = deriveReasonForQuestion(nextQuestion);
+    nextQuestion.investigationPath = state.route?.selectedLine;
+  }
+  return { done: false, question, nextQuestion, transition };
 }
 
 function handleAnswer(answer) {
@@ -1824,7 +2048,10 @@ function getDebugRoute() {
     reason: state.route?.reason,
     activeHypotheses: state.activeHypotheses,
     confirmedFacts: state.confirmedFacts,
+    confirmedFactDetails: state.confirmedFactDetails,
+    hypothesisScores: state.hypothesisScores,
     investigationPath: state.investigationPath,
+    transitions: state.debugEvents.filter((event) => event.type === "causal_transition"),
   };
 }
 
@@ -1844,6 +2071,9 @@ function resetApp() {
   state.activeHypotheses = [];
   state.rejectedHypotheses = [];
   state.confirmedFacts = [];
+  state.confirmedFactDetails = {};
+  state.unresolvedQuestions = [];
+  state.hypothesisScores = {};
   state.currentDepth = 0;
   state.investigationPath = [];
   state.debugEvents = [];

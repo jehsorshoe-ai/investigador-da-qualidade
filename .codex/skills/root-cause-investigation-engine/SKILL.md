@@ -37,11 +37,15 @@ INPUT -> CLASSIFICACAO -> ROUTER -> QUESTION ENGINE -> STATE -> HIPOTESES -> CON
   text,
   type,
   category,
+  parentQuestionId,
+  triggerAnswer,
   triggerFacts,
+  triggerAllFacts,
   requiredAsked,
   questionPurpose,
   targetHypothesis,
   expectedInformationGain,
+  reasonForQuestion,
   evidence
 }
 ```
@@ -53,6 +57,7 @@ INPUT -> CLASSIFICACAO -> ROUTER -> QUESTION ENGINE -> STATE -> HIPOTESES -> CON
 node --check app.js
 node tests/engine.test.js
 node tests/service-debug.js
+node tests/causal-continuity-debug.js
 ```
 
 ## Routing Standards
@@ -80,6 +85,12 @@ Do not use a static questionnaire mindset. Each question must:
 - discover a mechanism;
 - collect evidence;
 - depend on route, facts, previous answers, or depth.
+
+Before showing a next question, explain: "why this question now?" If there is no causal reason, do not show it.
+
+Maintain causal continuity with `confirmedFacts`, `confirmedFactDetails`, `activeHypotheses`, `rejectedHypotheses`, `hypothesisScores`, and `debugEvents`.
+
+In `SERVICE_FAILURE`, block questions about proposal, promise, price, funnel, conversion, closing, or sales unless a fact such as `broken_promise` or `route_sales` exists.
 
 Use `BOOLEAN` only for questions that can honestly be answered with `Sim`, `Nao`, `Parcialmente`, `Nao sei`.
 
@@ -109,5 +120,6 @@ Preserve these cases:
 - `Vendemos muitas propostas, mas poucos clientes fecham.` -> commercial conversion.
 - `O caminhao voltou para oficina pela mesma falha.` -> technical rework.
 - `A nota fiscal saiu com dados incorretos.` -> document process.
+- Atendimento + tempo de resposta confirmado + baixa deteccao de desvios -> next question investigates monitoring, alert, SLA, owner, priority, or capacity; never promise, price, funnel, or conversion.
 
 When a change affects routing or questions, add a test before publishing.

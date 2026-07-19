@@ -96,11 +96,15 @@ Perguntas possuem metadados:
   text,
   type,
   category,
+  parentQuestionId,
+  triggerAnswer,
   triggerFacts,
+  triggerAllFacts,
   requiredAsked,
   questionPurpose,
   targetHypothesis,
   expectedInformationGain,
+  reasonForQuestion,
   evidence
 }
 ```
@@ -139,6 +143,48 @@ No app atual, a UI renderiza `BOOLEAN` e `MULTIPLE_CHOICE`. Os demais tipos exis
 3. Cobertura dos pilares Pessoas, Produto e Processo.
 4. Categorias com maior pontuacao.
 5. Fallback sem repetir pergunta.
+
+## Causal Continuity
+
+Cada pergunta precisa responder: "por que estou fazendo esta pergunta agora?"
+
+Cada resposta atualiza:
+
+- `confirmedFacts`
+- `confirmedFactDetails`
+- `activeHypotheses`
+- `rejectedHypotheses`
+- `hypothesisScores`
+- `debugEvents`
+
+Toda transicao causal registra:
+
+```js
+{
+  type: "causal_transition",
+  parentQuestionId,
+  triggerAnswer,
+  answeredQuestionId,
+  nextQuestionId,
+  targetHypothesis,
+  reasonForQuestion,
+  supportingEvidence,
+  scoreDelta,
+  investigationPath
+}
+```
+
+Em `SERVICE_FAILURE`, perguntas sobre promessa, proposta, preco, funil, conversao ou venda ficam bloqueadas sem evidencias como `broken_promise` ou `route_sales`.
+
+Exemplo de continuidade:
+
+```text
+tempo de resposta confirmado
++ baixa deteccao de desvios
+-> perguntar sobre controle visual, alerta, SLA, responsavel, capacidade ou priorizacao
+```
+
+Nao perguntar sobre promessa comercial nesse ponto.
 
 ## Service Failure
 
@@ -220,6 +266,7 @@ Rodar:
 node --check app.js
 node tests/engine.test.js
 node tests/service-debug.js
+node tests/causal-continuity-debug.js
 ```
 
 Regressoes obrigatorias:

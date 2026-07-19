@@ -58,6 +58,29 @@ function assertNoCommercialFunnelQuestions(questions) {
   );
 }
 
+function hypothesisScore(id) {
+  return engine.state.hypothesisScores?.[id] || 0;
+}
+
+function answerQuestionById(id, answer) {
+  const index = engine.state.questions.findIndex((question) => question.id === id);
+  assert.notEqual(index, -1, `missing question id: ${id}`);
+  engine.state.index = index;
+  return engine.recordAnswer(answer);
+}
+
+function assertNoServiceJumpToCommercial(question) {
+  assert.doesNotMatch(
+    question.text,
+    /proposta|promessa|pre[cç]o|funil|convers[aã]o|fechamento|venda/i,
+    "SERVICE_FAILURE nao pode saltar para promessa, preco, funil ou conversao sem evidencia causal",
+  );
+  assert.notEqual(question.category, "offer");
+  assert.notEqual(question.targetHypothesis, "value_proposition_mismatch");
+  assert.notEqual(question.targetHypothesis, "broken_promise");
+  assert.notEqual(question.targetHypothesis, "gargalo_do_funil");
+}
+
 function testQuestionContract() {
   for (const question of allQuestions()) {
     assert.ok(question.text.endsWith("?"), `question must end with ?: ${question.text}`);
@@ -73,6 +96,54 @@ function testQuestionContract() {
       assert.ok(question.options.length >= 2, `multiple-choice needs at least 2 options: ${question.text}`);
     }
   }
+}
+
+function testServiceDelayDeviationMaintainsCausalContinuity() {
+  begin("Cliente reclamou de mau atendimento.", "auto", "retail");
+  assert.equal(engine.state.route.selectedLine, "SERVICE_FAILURE");
+
+  answerQuestionById("service_manifestation", "delay");
+  answerQuestionById("service_channel_concentration", "no");
+  answerQuestionById("service_response_time_symptom", "yes");
+  answerQuestionById("service_complaint_reason_recorded", "yes");
+
+  const lackOfMonitoringBefore = hypothesisScore("lack_of_monitoring");
+  const valueMismatchBefore = hypothesisScore("value_proposition_mismatch");
+  const result = answerQuestionById("service_deviation_detection", "no");
+  const next = result.nextQuestion;
+  const transition = result.transition;
+
+  assertNoServiceJumpToCommercial(next);
+  assert.equal(engine.state.route.selectedLine, "SERVICE_FAILURE");
+  assert.equal(next.investigationPath, "SERVICE_FAILURE");
+  assert.equal(next.parentQuestionId, "service_deviation_detection");
+  assert.equal(next.triggerAnswer, "no");
+  assert.ok(
+    [
+      "lack_of_monitoring",
+      "missing_alert",
+      "missing_service_sla",
+      "reactive_process",
+      "unclear_delay_owner",
+      "capacity_overload",
+    ].includes(next.targetHypothesis),
+    `hipotese inesperada: ${next.targetHypothesis}`,
+  );
+  assert.match(next.reasonForQuestion, /tempo de resposta|rotina saiu do normal|monitoramento|alerta|controle/i);
+
+  assert.equal(transition.parentQuestionId, "service_deviation_detection");
+  assert.equal(transition.triggerAnswer, "no");
+  assert.equal(transition.nextQuestionId, next.id);
+  assert.equal(transition.targetHypothesis, next.targetHypothesis);
+  assert.match(transition.reasonForQuestion, /tempo de resposta|rotina saiu do normal|monitoramento|alerta|controle/i);
+  assert.ok(transition.scoreDelta.lack_of_monitoring > 0);
+  assert.ok(transition.scoreDelta.missing_alert > 0 || transition.scoreDelta.reactive_process > 0);
+  assert.equal(transition.scoreDelta.value_proposition_mismatch || 0, 0);
+  assert.ok(hypothesisScore("lack_of_monitoring") > lackOfMonitoringBefore);
+  assert.equal(hypothesisScore("value_proposition_mismatch"), valueMismatchBefore);
+  assert.ok(transition.supportingEvidence.some((item) => /tempo de resposta/i.test(item)));
+  assert.ok(transition.supportingEvidence.some((item) => /desvio|controle visual|rotina/i.test(item)));
+  assert.equal(engine.state.confirmedFacts.includes("broken_promise"), false);
 }
 
 function testClassificationRoutes() {
@@ -201,6 +272,7 @@ const tests = [
   testNoReturnFindsProcessBeforeBlame,
   testCommercialRouteStaysCommercial,
   testDebugRouteExplanation,
+  testServiceDelayDeviationMaintainsCausalContinuity,
 ];
 
 for (const test of tests) {
