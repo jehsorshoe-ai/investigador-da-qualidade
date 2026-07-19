@@ -7,8 +7,8 @@ Aplicativo mobile-first inspirado no Akinator, mas focado em descobrir a causa r
 - Coleta o perfil do usuário e o problema inicial.
 - Adapta a investigação por segmento, área e público afetado.
 - Faz perguntas curtas com respostas simples.
-- Classifica hipóteses por um Ishikawa adaptado ao contexto.
-- Combina leitura de Qualidade com 5 Porquês para aprofundar causa raiz.
+- Classifica hipóteses por causas adaptadas ao contexto.
+- Conduz perguntas objetivas para aprofundar a causa provável.
 - Entrega causa raiz provável, evidências, indicadores e plano 5W2H.
 - Permite copiar ou baixar o diagnóstico.
 

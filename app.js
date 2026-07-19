@@ -548,6 +548,26 @@ function confidence() {
   return Math.min(92, Math.round((top / total) * 100));
 }
 
+function hypothesisStrength() {
+  const score = confidence();
+  if (score >= 70) {
+    return {
+      label: "Hipotese forte",
+      note: "As respostas convergiram bem para uma causa principal.",
+    };
+  }
+  if (score >= 45) {
+    return {
+      label: "Hipotese moderada",
+      note: "Ha bons sinais, mas ainda existem causas secundarias relevantes.",
+    };
+  }
+  return {
+    label: "Hipotese inicial",
+    note: "As respostas ainda estao divididas; use este resultado como primeira direcao de investigacao.",
+  };
+}
+
 function shouldFinish() {
   const askedCategories = new Set(state.asked.map((item) => item.category));
   return (
@@ -672,9 +692,9 @@ function buildEvidence(categoryKey) {
 
 function resultIntro(diagnosis, secondary) {
   if (state.area === "commercial") {
-    return `${diagnosis.summary} Leituras secundarias para checar: ${secondary.join(" e ")}. Pela lente da qualidade, trate vendas como um fluxo com entradas, metodo, medicao, pessoas, tecnologia e ambiente de mercado.`;
+    return `${diagnosis.summary} Tambem vale verificar: ${secondary.join(" e ")}. Para este caso comercial, o plano deve olhar para entrada de oportunidades, rotina de acompanhamento, clareza da oferta, canais e comportamento do cliente.`;
   }
-  return `${diagnosis.summary} Leituras secundarias para checar: ${secondary.join(" e ")}. A investigacao combinou Ishikawa adaptado ao contexto com perguntas no estilo 5 Porques.`;
+  return `${diagnosis.summary} Tambem vale verificar: ${secondary.join(" e ")}. O plano deve priorizar evidencias observaveis, responsavel claro e acompanhamento ate confirmar a causa real.`;
 }
 
 function renderResult() {
@@ -683,10 +703,11 @@ function renderResult() {
   const secondary = secondaryCategories(categoryKey);
   const evidence = buildEvidence(categoryKey);
   const plan = diagnosis.plan;
+  const strength = hypothesisStrength();
 
-  document.querySelector("#confidenceLabel").textContent = `${confidence()}% de confianca`;
+  document.querySelector("#confidenceLabel").textContent = strength.label;
   document.querySelector("#rootCauseTitle").textContent = diagnosis.title;
-  document.querySelector("#rootCauseText").textContent = resultIntro(diagnosis, secondary);
+  document.querySelector("#rootCauseText").textContent = `${strength.note} ${resultIntro(diagnosis, secondary)}`;
   document.querySelector("#evidenceList").innerHTML = evidence.map((item) => `<li>${item}</li>`).join("");
   document.querySelector("#metricList").innerHTML = diagnosis.metrics
     .map((metric) => `<li>${metric}</li>`)
@@ -710,6 +731,7 @@ function buildReport() {
   const secondary = secondaryCategories(categoryKey);
   const evidence = buildEvidence(categoryKey).map((item) => `- ${item}`).join("\n");
   const plan = diagnosis.plan;
+  const strength = hypothesisStrength();
 
   return `O Investigador da Qualidade
 
@@ -720,8 +742,9 @@ Publico afetado: ${audienceLabels[state.audience]}
 Problema: ${state.problem}
 
 Causa raiz provavel: ${diagnosis.title}
-Confianca: ${confidence()}%
-Leituras secundarias: ${secondary.join(", ")}
+Grau da hipotese: ${strength.label}
+Observacao: ${strength.note}
+Pontos para verificar: ${secondary.join(", ")}
 
 Resumo:
 ${resultIntro(diagnosis, secondary)}
